@@ -1,0 +1,7 @@
+TEAM_ID=
+
+PRODUCT_NAME=jb-interhyp-challenge
+PRODUCT_BUNDLE_IDENTIFIER=de.tum.hack.jb.interhyp.challenge.jb-interhyp-challenge$(TEAM_ID)
+
+CURRENT_PROJECT_VERSION=1
+MARKETING_VERSION=1.0
