@@ -42,7 +42,7 @@ fun OnboardingScreen(
     viewModel: OnboardingViewModel = koinInject()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    
+
     // Steps: 0 = Greeting, 1 = Target, 2 = Personal, 3 = Summary
     var currentStep by remember { mutableStateOf(0) }
     val totalSteps = 3 // excluding summary presentation
@@ -58,7 +58,7 @@ fun OnboardingScreen(
     var monthlyExpenses by remember { mutableStateOf("") }
     var adults by remember { mutableStateOf("") }
     var children by remember { mutableStateOf("") }
-    
+
     // Handle completion
     LaunchedEffect(uiState.isCompleted) {
         if (uiState.isCompleted) {
@@ -73,18 +73,18 @@ fun OnboardingScreen(
     val targetValid by remember(targetType, sizeSqm, location) {
         mutableStateOf(
             location.isNotBlank() &&
-                toDoubleSafe(sizeSqm)?.let { it > 0 } == true &&
-                (targetType == "House" || targetType == "Apartment")
+                    toDoubleSafe(sizeSqm)?.let { it > 0 } == true &&
+                    (targetType == "House" || targetType == "Apartment")
         )
     }
     val personalValid by remember(age, netIncome, currentWealth, monthlyExpenses, adults, children) {
         mutableStateOf(
             toIntSafe(age)?.let { it in 16..100 } == true &&
-                toDoubleSafe(netIncome)?.let { it >= 0 } == true &&
-                toDoubleSafe(currentWealth)?.let { it >= 0 } == true &&
-                toDoubleSafe(monthlyExpenses)?.let { it >= 0 } == true &&
-                toIntSafe(adults)?.let { it >= 1 } == true &&
-                toIntSafe(children)?.let { it >= 0 } == true
+                    toDoubleSafe(netIncome)?.let { it >= 0 } == true &&
+                    toDoubleSafe(currentWealth)?.let { it >= 0 } == true &&
+                    toDoubleSafe(monthlyExpenses)?.let { it >= 0 } == true &&
+                    toIntSafe(adults)?.let { it >= 1 } == true &&
+                    toIntSafe(children)?.let { it >= 0 } == true
         )
     }
 
