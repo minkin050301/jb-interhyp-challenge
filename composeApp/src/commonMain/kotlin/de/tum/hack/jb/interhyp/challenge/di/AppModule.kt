@@ -57,7 +57,7 @@ val dataModule = module {
  */
 val presentationModule = module {
     factory { OnboardingViewModel(get(), get(), get(), get()) }
-    single { DashboardViewModel(get(), get(), get()) }
+    single { DashboardViewModel(get(), get(), get(), get()) }
     factory { ProfileViewModel(get()) }
     factory { InsightsViewModel(get(), get(), get(), get()) }
     factory { GoalSelectionViewModel(get(), get()) }

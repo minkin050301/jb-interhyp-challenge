@@ -47,7 +47,6 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.material3.CircularProgressIndicator
-import de.tum.hack.jb.interhyp.challenge.presentation.dashboard.DashboardViewModel
 import de.tum.hack.jb.interhyp.challenge.ui.util.byteArrayToImageBitmap
 import de.tum.hack.jb.interhyp.challenge.data.repository.VertexAIRepository
 import org.jetbrains.compose.resources.ExperimentalResourceApi
@@ -122,8 +121,6 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
 
     // Inject ViewModels
     val insightsViewModel: InsightsViewModel = koinInject()
-    val dashboardViewModel: DashboardViewModel = koinInject()
-    val uiState by dashboardViewModel.uiState.collectAsState()
 
     when (currentScreen) {
         "insights" -> {
