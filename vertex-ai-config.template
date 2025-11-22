@@ -1,0 +1,37 @@
+# Vertex AI Configuration Template
+# 
+# Copy these environment variables to your shell profile or CI/CD configuration
+# Never commit real credentials to version control!
+
+# Your Google Cloud Project ID
+export VERTEX_AI_PROJECT_ID="your-project-id-here"
+
+# Your Vertex AI API Key (get from Google Cloud Console)
+export VERTEX_AI_API_KEY="your-api-key-here"
+
+# Location/Region (optional, defaults to "global")
+# Options: global, us-central1, europe-west1, asia-southeast1, etc.
+export VERTEX_AI_LOCATION="global"
+
+# Alternative: Use OAuth Access Token instead of API Key
+# export VERTEX_AI_ACCESS_TOKEN="your-oauth-token-here"
+
+# =============================================================================
+# How to get these values:
+# =============================================================================
+# 1. Go to https://console.cloud.google.com/
+# 2. Create a new project or select existing one
+# 3. Enable Vertex AI API
+# 4. Go to "APIs & Services" > "Credentials"
+# 5. Create an API key
+# 6. Copy your project ID and API key
+#
+# For production, use OAuth 2.0 tokens instead of API keys for better security.
+# =============================================================================
+
+# Usage:
+# 1. Copy this file: cp vertex-ai-config.template vertex-ai-config.sh
+# 2. Edit vertex-ai-config.sh with your real values
+# 3. Source it: source vertex-ai-config.sh
+# 4. Add vertex-ai-config.sh to .gitignore
+
