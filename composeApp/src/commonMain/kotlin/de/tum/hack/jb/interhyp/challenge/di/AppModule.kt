@@ -10,6 +10,7 @@ import de.tum.hack.jb.interhyp.challenge.data.service.MonthlyReminderService
 import de.tum.hack.jb.interhyp.challenge.data.service.MonthlyReminderServiceImpl
 import de.tum.hack.jb.interhyp.challenge.domain.model.VertexAIConfig
 import de.tum.hack.jb.interhyp.challenge.presentation.dashboard.DashboardViewModel
+import de.tum.hack.jb.interhyp.challenge.presentation.goal.GoalSelectionViewModel
 import de.tum.hack.jb.interhyp.challenge.presentation.insights.InsightsViewModel
 import de.tum.hack.jb.interhyp.challenge.presentation.onboarding.OnboardingViewModel
 import de.tum.hack.jb.interhyp.challenge.presentation.profile.ProfileViewModel
@@ -56,6 +57,7 @@ val presentationModule = module {
     factory { DashboardViewModel(get(), get(), get(), get()) }
     factory { ProfileViewModel(get()) }
     factory { InsightsViewModel(get(), get(), get(), get()) }
+    factory { GoalSelectionViewModel(get(), get()) }
     single { ThemeViewModel() }
 }
 

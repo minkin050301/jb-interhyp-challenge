@@ -92,7 +92,44 @@ class DashboardViewModel(
      */
     private suspend fun loadPropertyAndBudget(user: User) {
         viewModelScope.launch {
-            // Create UserProfile from User for budget calculation
+            // Use saved goal price if available, otherwise calculate average
+            val propertyPrice = if (user.goalPropertyPrice != null && user.goalPropertyPrice!! > 0) {
+                // Use saved goal price
+                user.goalPropertyPrice!!
+            } else {
+                // Fall back to calculating average price
+                // Create UserProfile from User for budget calculation
+                val userProfile = UserProfile(
+                    userId = user.id,
+                    name = user.name,
+                    age = user.age,
+                    monthlyIncome = user.netIncome,
+                    monthlyExpenses = user.expenses,
+                    currentEquity = user.wealth,
+                    desiredLocation = "Munich", // Default, should be stored
+                    desiredPropertySize = user.goalPropertySize ?: 80.0  // Use saved goal size or default
+                )
+                
+                // Get average property price - use first() to get a single value
+                val result = propertyRepository.getAveragePrice(
+                    userProfile.desiredLocation,
+                    userProfile.desiredPropertySize
+                ).first()
+                
+                when (result) {
+                    is NetworkResult.Success -> result.data
+                    is NetworkResult.Error -> {
+                        // Use default fallback
+                        5000.0 * userProfile.desiredPropertySize
+                    }
+                    is NetworkResult.Loading -> {
+                        // Should not happen with first(), but fallback
+                        5000.0 * userProfile.desiredPropertySize
+                    }
+                }
+            }
+            
+            // Create UserProfile for budget calculation
             val userProfile = UserProfile(
                 userId = user.id,
                 name = user.name,
@@ -101,35 +138,13 @@ class DashboardViewModel(
                 monthlyExpenses = user.expenses,
                 currentEquity = user.wealth,
                 desiredLocation = "Munich", // Default, should be stored
-                desiredPropertySize = 80.0  // Default, should be stored
+                desiredPropertySize = user.goalPropertySize ?: 80.0
             )
             
-            // Get property price
-            propertyRepository.getAveragePrice(
-                userProfile.desiredLocation,
-                userProfile.desiredPropertySize
-            ).collect { result ->
-                when (result) {
-                    is NetworkResult.Success -> {
-                        val propertyPrice = result.data
-                        _uiState.update { it.copy(propertyPrice = propertyPrice) }
-                        
-                        // Calculate budget
-                        calculateBudget(userProfile, propertyPrice)
-                    }
-                    is NetworkResult.Error -> {
-                        _uiState.update { 
-                            it.copy(
-                                isLoading = false,
-                                errorMessage = result.message
-                            )
-                        }
-                    }
-                    is NetworkResult.Loading -> {
-                        // Already in loading state
-                    }
-                }
-            }
+            _uiState.update { it.copy(propertyPrice = propertyPrice) }
+            
+            // Calculate budget
+            calculateBudget(userProfile, propertyPrice)
         }
     }
     
