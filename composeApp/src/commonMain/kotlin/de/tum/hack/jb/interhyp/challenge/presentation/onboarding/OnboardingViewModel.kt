@@ -26,6 +26,7 @@ data class OnboardingUiState(
     val desiredLocation: String = "Munich",
     val desiredPropertySize: Double = 80.0,
     val desiredPropertyType: PropertyType = PropertyType.APARTMENT,
+    val selfieBase64: String? = null,
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
     val isCompleted: Boolean = false
@@ -101,6 +102,13 @@ class OnboardingViewModel(
     }
     
     /**
+     * Update selfie image (Base64 encoded)
+     */
+    fun updateSelfie(base64Image: String?) {
+        _uiState.update { it.copy(selfieBase64 = base64Image) }
+    }
+    
+    /**
      * Submit onboarding data and save user profile
      */
     fun submitOnboarding() {
@@ -134,8 +142,8 @@ class OnboardingViewModel(
                     desiredPropertyType = state.desiredPropertyType
                 )
                 
-                // Save user
-                val user = userProfile.toUser()
+                // Save user with selfie
+                val user = userProfile.toUser().copy(image = state.selfieBase64)
                 userRepository.saveUser(user)
                 
                 _uiState.update { it.copy(isLoading = false, isCompleted = true) }

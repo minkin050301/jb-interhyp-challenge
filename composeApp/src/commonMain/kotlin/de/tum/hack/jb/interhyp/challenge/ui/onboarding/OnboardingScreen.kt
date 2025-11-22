@@ -1,7 +1,9 @@
 package de.tum.hack.jb.interhyp.challenge.ui.onboarding
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -9,13 +11,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
@@ -26,8 +31,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asComposeImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import de.tum.hack.jb.interhyp.challenge.data.network.ImageUtils
+import de.tum.hack.jb.interhyp.challenge.ui.components.ImagePicker
+import org.jetbrains.skia.Image as SkiaImage
 
 @Composable
 fun OnboardingScreen(
@@ -35,9 +47,9 @@ fun OnboardingScreen(
 ) {
     var submitted by remember { mutableStateOf(false) }
 
-    // Steps: 0 = Greeting, 1 = Target, 2 = Personal, 3 = Summary
+    // Steps: 0 = Greeting, 1 = Target, 2 = Personal, 3 = Selfie, 4 = Summary
     var currentStep by remember { mutableStateOf(0) }
-    val totalSteps = 3 // excluding summary presentation
+    val totalSteps = 4 // excluding summary presentation
 
     // Greeting
     var userName by remember { mutableStateOf("") }
@@ -54,6 +66,10 @@ fun OnboardingScreen(
     var monthlyExpenses by remember { mutableStateOf("") }
     var adults by remember { mutableStateOf("") }
     var children by remember { mutableStateOf("") }
+
+    // Selfie
+    var selfieBytes by remember { mutableStateOf<ByteArray?>(null) }
+    var selfieBase64 by remember { mutableStateOf<String?>(null) }
 
     fun toDoubleSafe(s: String): Double? = s.replace(',', '.').toDoubleOrNull()
     fun toIntSafe(s: String): Int? = s.toIntOrNull()
@@ -76,6 +92,9 @@ fun OnboardingScreen(
                 toIntSafe(children)?.let { it >= 0 } == true
         )
     }
+    val selfieValid by remember(selfieBytes) {
+        mutableStateOf(selfieBytes != null)
+    }
 
     val scroll = rememberScrollState()
 
@@ -96,6 +115,7 @@ fun OnboardingScreen(
             0 -> "Step 1 of $totalSteps · Welcome"
             1 -> "Step 2 of $totalSteps · Your Target"
             2 -> "Step 3 of $totalSteps · About You"
+            3 -> "Step 4 of $totalSteps · Your Selfie"
             else -> "Summary"
         }
         Text(stepLabel, style = MaterialTheme.typography.titleMedium)
@@ -151,6 +171,80 @@ fun OnboardingScreen(
                     }
                 }
             }
+            3 -> {
+                ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(
+                        Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        SectionTitle("Your Selfie")
+                        Text("Take a quick selfie to personalize your profile!")
+                        
+                        // Display selected selfie
+                        if (selfieBytes != null) {
+                            Box(
+                                modifier = Modifier
+                                    .size(200.dp)
+                                    .clip(CircleShape)
+                            ) {
+                                val imageBitmap = remember(selfieBytes) {
+                                    selfieBytes?.let {
+                                        SkiaImage.makeFromEncoded(it).asComposeImageBitmap()
+                                    }
+                                }
+                                
+                                if (imageBitmap != null) {
+                                    Image(
+                                        bitmap = imageBitmap,
+                                        contentDescription = "Your selfie",
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                }
+                            }
+                            Spacer(Modifier.height(8.dp))
+                            Text("✓ Selfie captured!", color = MaterialTheme.colorScheme.primary)
+                        } else {
+                            Box(
+                                modifier = Modifier
+                                    .size(200.dp)
+                                    .clip(CircleShape)
+                                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text("No photo yet", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
+                        
+                        // Image picker button
+                        ImagePicker(
+                            onImageSelected = { bytes ->
+                                selfieBytes = bytes
+                                selfieBase64 = bytes?.let { ImageUtils.encodeImageToBase64(it) }
+                            }
+                        ) { pickImage ->
+                            if (selfieBytes == null) {
+                                Button(onClick = pickImage) {
+                                    Text("Take Selfie / Choose Photo")
+                                }
+                            } else {
+                                OutlinedButton(onClick = pickImage) {
+                                    Text("Change Photo")
+                                }
+                            }
+                        }
+                        
+                        if (selfieBytes == null) {
+                            Text(
+                                "You can also skip this step and add it later",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
             else -> {
                 ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -161,6 +255,7 @@ fun OnboardingScreen(
                             "Personal: age ${age.ifBlank { "?" }}, net income ${netIncome.ifBlank { "?" }}, wealth ${currentWealth.ifBlank { "?" }}, expenses ${monthlyExpenses.ifBlank { "?" }}"
                         )
                         Text("Household: ${adults.ifBlank { "?" }} adults, ${children.ifBlank { "?" }} children")
+                        Text("Selfie: ${if (selfieBytes != null) "✓ Added" else "Not added"}")
                     }
                 }
             }
@@ -177,13 +272,14 @@ fun OnboardingScreen(
                 0 -> greetingValid
                 1 -> targetValid
                 2 -> personalValid
+                3 -> true // Selfie is optional, can always proceed
                 else -> false
             }
 
-            if (currentStep < 2) {
+            if (currentStep < 3) {
                 Button(onClick = { currentStep += 1 }, enabled = canGoNext) { Text("Next") }
-            } else if (currentStep == 2) {
-                Button(onClick = { currentStep = 3 }, enabled = canGoNext) { Text("Review") }
+            } else if (currentStep == 3) {
+                Button(onClick = { currentStep = 4 }, enabled = canGoNext) { Text("Review") }
             } else {
                 Button(onClick = { submitted = true }, enabled = targetValid && personalValid && greetingValid) {
                     Text("Submit")
@@ -204,6 +300,8 @@ fun OnboardingScreen(
                 monthlyExpenses = ""
                 adults = ""
                 children = ""
+                selfieBytes = null
+                selfieBase64 = null
             }) {
                 Text("Reset")
             }
