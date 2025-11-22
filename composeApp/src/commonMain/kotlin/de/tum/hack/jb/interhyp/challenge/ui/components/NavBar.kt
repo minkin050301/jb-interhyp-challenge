@@ -15,6 +15,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -143,7 +145,7 @@ private fun NavBarButton(
     
     Box(
         modifier = Modifier
-            .size(if (isHome) 64.dp else 56.dp)
+            .defaultMinSize(minWidth = if (isHome) 64.dp else 56.dp, minHeight = if (isHome) 64.dp else 56.dp)
             .scale(scale)
             .clip(if (isHome) CircleShape else RoundedCornerShape(16.dp))
             .background(backgroundColor)
@@ -153,20 +155,26 @@ private fun NavBarButton(
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+            modifier = Modifier
+                .padding(horizontal = 12.dp, vertical = 8.dp)
+                .widthIn(max = if (isHome) 80.dp else 72.dp)
         ) {
             item.icon.content(
                 Modifier.size(if (isHome) 28.dp else 24.dp),
                 contentColor,
                 if (isHome) 28.dp else 24.dp
             )
-            if (isSelected || isHome) {
+            if (isSelected) {
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = item.label,
                     style = MaterialTheme.typography.labelSmall,
                     fontSize = 10.sp,
-                    color = contentColor
+                    color = contentColor,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    textAlign = TextAlign.Center,
+                    lineHeight = 12.sp
                 )
             }
         }
