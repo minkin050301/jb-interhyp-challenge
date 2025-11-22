@@ -7,9 +7,6 @@ import de.tum.hack.jb.interhyp.challenge.presentation.dashboard.DashboardViewMod
 import de.tum.hack.jb.interhyp.challenge.presentation.onboarding.OnboardingViewModel
 import de.tum.hack.jb.interhyp.challenge.presentation.theme.ThemeViewModel
 import io.ktor.client.*
-import org.koin.core.module.dsl.factoryOf
-import org.koin.core.module.dsl.singleOf
-import org.koin.dsl.bind
 import org.koin.dsl.module
 
 /**
@@ -30,9 +27,9 @@ val dataModule = module {
     // Vertex AI configuration - Update these values with your project details
     single<VertexAIConfig> {
         VertexAIConfig(
-            projectId = System.getenv("VERTEX_AI_PROJECT_ID") ?: "your-project-id",
-            location = System.getenv("VERTEX_AI_LOCATION") ?: "global",
-            apiKey = System.getenv("VERTEX_AI_API_KEY")
+            projectId = "hackatum25mun-1100",
+            location = "global",
+            apiKey = "AIzaSyAv1fxkUrfz4uCjlFuxUlJASshw8de6uYY"
         )
     }
     
