@@ -22,6 +22,7 @@ import de.tum.hack.jb.interhyp.challenge.ui.components.Insights
 import de.tum.hack.jb.interhyp.challenge.ui.components.NavItem
 import de.tum.hack.jb.interhyp.challenge.ui.components.Settings
 import de.tum.hack.jb.interhyp.challenge.ui.settings.SettingsScreen
+import de.tum.hack.jb.interhyp.challenge.ui.profile.ProfileEditScreen
 import de.tum.hack.jb.interhyp.challenge.presentation.theme.ThemeViewModel
 
 @Composable
@@ -36,7 +37,13 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
         "settings" -> {
             SettingsScreen(
                 themeViewModel = themeViewModel,
-                onNavigateBack = { currentScreen = "home" }
+                onNavigateBack = { currentScreen = "home" },
+                onNavigateToProfile = { currentScreen = "profile" }
+            )
+        }
+        "profile" -> {
+            ProfileEditScreen(
+                onBack = { currentScreen = "settings" }
             )
         }
         else -> {

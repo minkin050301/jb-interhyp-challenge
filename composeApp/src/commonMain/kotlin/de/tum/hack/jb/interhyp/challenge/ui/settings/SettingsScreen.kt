@@ -18,7 +18,8 @@ import de.tum.hack.jb.interhyp.challenge.presentation.theme.ThemeViewModel
 @Composable
 fun SettingsScreen(
     themeViewModel: ThemeViewModel,
-    onNavigateBack: () -> Unit = {}
+    onNavigateBack: () -> Unit = {},
+    onNavigateToProfile: () -> Unit = {}
 ) {
     val themePreference by themeViewModel.themePreference.collectAsState()
     
@@ -45,6 +46,33 @@ fun SettingsScreen(
                 style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.primary
             )
+            
+            // Profile Section
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "Profile",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    
+                    Button(
+                        onClick = onNavigateToProfile,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Edit Profile Information")
+                    }
+                }
+            }
             
             // Appearance Section
             Card(

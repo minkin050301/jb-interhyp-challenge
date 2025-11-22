@@ -5,6 +5,7 @@ import de.tum.hack.jb.interhyp.challenge.data.repository.*
 import de.tum.hack.jb.interhyp.challenge.domain.model.VertexAIConfig
 import de.tum.hack.jb.interhyp.challenge.presentation.dashboard.DashboardViewModel
 import de.tum.hack.jb.interhyp.challenge.presentation.onboarding.OnboardingViewModel
+import de.tum.hack.jb.interhyp.challenge.presentation.profile.ProfileViewModel
 import de.tum.hack.jb.interhyp.challenge.presentation.theme.ThemeViewModel
 import io.ktor.client.*
 import org.koin.dsl.module
@@ -42,6 +43,7 @@ val dataModule = module {
 val presentationModule = module {
     factory { OnboardingViewModel(get(), get(), get()) }
     factory { DashboardViewModel(get(), get(), get()) }
+    factory { ProfileViewModel(get()) }
     single { ThemeViewModel() }
 }
 

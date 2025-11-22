@@ -1,10 +1,7 @@
-package de.tum.hack.jb.interhyp.challenge.presentation.onboarding
+package de.tum.hack.jb.interhyp.challenge.presentation.profile
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import de.tum.hack.jb.interhyp.challenge.data.network.NetworkResult
-import de.tum.hack.jb.interhyp.challenge.data.repository.BudgetRepository
-import de.tum.hack.jb.interhyp.challenge.data.repository.PropertyRepository
 import de.tum.hack.jb.interhyp.challenge.data.repository.UserRepository
 import de.tum.hack.jb.interhyp.challenge.domain.model.PropertyType
 import de.tum.hack.jb.interhyp.challenge.domain.model.UserProfile
@@ -15,9 +12,9 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
- * UI State for Onboarding screen
+ * UI State for Profile Edit screen
  */
-data class OnboardingUiState(
+data class ProfileUiState(
     val name: String = "",
     val age: Int = 25,
     val monthlyIncome: Double = 0.0,
@@ -35,21 +32,87 @@ data class OnboardingUiState(
     val numberOfChildren: Int = 0,
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
-    val isCompleted: Boolean = false
+    val isSaved: Boolean = false,
+    val hasExistingProfile: Boolean = false
 )
 
 /**
- * ViewModel for Onboarding screen
- * Handles user profile data collection using unidirectional data flow
+ * ViewModel for Profile Edit screen
+ * Handles loading and updating user profile data
  */
-class OnboardingViewModel(
-    private val userRepository: UserRepository,
-    private val propertyRepository: PropertyRepository,
-    private val budgetRepository: BudgetRepository
+class ProfileViewModel(
+    private val userRepository: UserRepository
 ) : ViewModel() {
     
-    private val _uiState = MutableStateFlow(OnboardingUiState())
-    val uiState: StateFlow<OnboardingUiState> = _uiState.asStateFlow()
+    private val _uiState = MutableStateFlow(ProfileUiState())
+    val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
+    
+    init {
+        loadUserProfile()
+    }
+    
+    /**
+     * Load existing user profile from repository
+     */
+    fun loadUserProfile() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+            
+            try {
+                // First try to load from partial profile (most recent data)
+                userRepository.getPartialProfile().collect { profile ->
+                    if (profile != null) {
+                        _uiState.update {
+                            it.copy(
+                                name = profile.name,
+                                age = profile.age,
+                                monthlyIncome = profile.monthlyIncome,
+                                futureMonthlyIncome = profile.futureMonthlyIncome,
+                                monthlyExpenses = profile.monthlyExpenses,
+                                currentEquity = profile.currentEquity,
+                                existingCredits = profile.existingCredits,
+                                desiredLocation = profile.desiredLocation,
+                                desiredPropertySize = profile.desiredPropertySize,
+                                desiredPropertyType = profile.desiredPropertyType,
+                                targetDate = profile.targetDate,
+                                desiredChildren = profile.desiredChildren,
+                                avatarImage = profile.avatarImage,
+                                numberOfAdults = profile.familyMembers.count { member -> member.age >= 18 }.coerceAtLeast(1),
+                                numberOfChildren = profile.familyMembers.count { member -> member.age < 18 },
+                                isLoading = false,
+                                hasExistingProfile = true
+                            )
+                        }
+                    } else {
+                        // Fall back to full user profile if no partial profile exists
+                        userRepository.getUser().collect { user ->
+                            if (user != null) {
+                                _uiState.update {
+                                    it.copy(
+                                        name = user.name,
+                                        age = user.age,
+                                        monthlyIncome = user.netIncome,
+                                        monthlyExpenses = user.expenses,
+                                        currentEquity = user.wealth,
+                                        numberOfAdults = user.familyMembers.count { member -> member.age >= 18 },
+                                        numberOfChildren = user.familyMembers.count { member -> member.age < 18 },
+                                        isLoading = false,
+                                        hasExistingProfile = true
+                                    )
+                                }
+                            } else {
+                                _uiState.update { it.copy(isLoading = false, hasExistingProfile = false) }
+                            }
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(isLoading = false, errorMessage = "Failed to load profile: ${e.message}")
+                }
+            }
+        }
+    }
     
     /**
      * Update user name
@@ -157,81 +220,11 @@ class OnboardingViewModel(
     }
     
     /**
-     * Save intermediate progress (partial profile data)
+     * Save profile changes
      */
-    fun saveIntermediateProgress() {
+    fun saveProfile() {
         viewModelScope.launch {
-            try {
-                val state = _uiState.value
-                
-                // Create partial user profile from current state
-                val partialProfile = UserProfile(
-                    userId = generateUserId(),
-                    name = state.name,
-                    age = state.age,
-                    monthlyIncome = state.monthlyIncome,
-                    futureMonthlyIncome = state.futureMonthlyIncome,
-                    monthlyExpenses = state.monthlyExpenses,
-                    currentEquity = state.currentEquity,
-                    existingCredits = state.existingCredits,
-                    desiredLocation = state.desiredLocation,
-                    desiredPropertySize = state.desiredPropertySize,
-                    desiredPropertyType = state.desiredPropertyType,
-                    targetDate = state.targetDate,
-                    desiredChildren = state.desiredChildren,
-                    avatarImage = state.avatarImage
-                )
-                
-                // Save partial profile
-                userRepository.savePartialProfile(partialProfile)
-            } catch (e: Exception) {
-                // Silent fail for intermediate saves
-                println("Failed to save intermediate progress: ${e.message}")
-            }
-        }
-    }
-    
-    /**
-     * Load saved profile data to resume onboarding
-     */
-    fun loadSavedProfile() {
-        viewModelScope.launch {
-            try {
-                userRepository.getPartialProfile().collect { profile ->
-                    profile?.let {
-                        _uiState.update { state ->
-                            state.copy(
-                                name = it.name,
-                                age = it.age,
-                                monthlyIncome = it.monthlyIncome,
-                                futureMonthlyIncome = it.futureMonthlyIncome,
-                                monthlyExpenses = it.monthlyExpenses,
-                                currentEquity = it.currentEquity,
-                                existingCredits = it.existingCredits,
-                                desiredLocation = it.desiredLocation,
-                                desiredPropertySize = it.desiredPropertySize,
-                                desiredPropertyType = it.desiredPropertyType,
-                                targetDate = it.targetDate,
-                                desiredChildren = it.desiredChildren,
-                                avatarImage = it.avatarImage,
-                                numberOfAdults = it.familyMembers.count { member -> member.age >= 18 }.coerceAtLeast(1),
-                                numberOfChildren = it.familyMembers.count { member -> member.age < 18 }
-                            )
-                        }
-                    }
-                }
-            } catch (e: Exception) {
-                println("Failed to load saved profile: ${e.message}")
-            }
-        }
-    }
-    
-    /**
-     * Submit onboarding data and save user profile
-     */
-    fun submitOnboarding() {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+            _uiState.update { it.copy(isLoading = true, errorMessage = null, isSaved = false) }
             
             try {
                 val state = _uiState.value
@@ -265,17 +258,25 @@ class OnboardingViewModel(
                     avatarImage = state.avatarImage
                 )
                 
-                // Save user
+                // Save both user and partial profile for consistency
                 val user = userProfile.toUser()
                 userRepository.saveUser(user)
+                userRepository.savePartialProfile(userProfile)
                 
-                _uiState.update { it.copy(isLoading = false, isCompleted = true) }
+                _uiState.update { it.copy(isLoading = false, isSaved = true, hasExistingProfile = true) }
             } catch (e: Exception) {
                 _uiState.update { 
                     it.copy(isLoading = false, errorMessage = "Failed to save profile: ${e.message}") 
                 }
             }
         }
+    }
+    
+    /**
+     * Reset saved flag (for showing success message)
+     */
+    fun resetSavedFlag() {
+        _uiState.update { it.copy(isSaved = false) }
     }
     
     /**

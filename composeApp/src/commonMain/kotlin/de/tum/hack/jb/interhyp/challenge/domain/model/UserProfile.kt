@@ -12,11 +12,16 @@ data class UserProfile(
     val name: String,
     val age: Int,
     val monthlyIncome: Double,
+    val futureMonthlyIncome: Double? = null, // Expected future income
     val monthlyExpenses: Double,
     val currentEquity: Double, // Current wealth/savings
+    val existingCredits: Double = 0.0, // Existing credit obligations (monthly)
     val desiredLocation: String,
     val desiredPropertySize: Double, // in square meters
     val desiredPropertyType: PropertyType = PropertyType.APARTMENT,
+    val targetDate: String? = null, // When user wants to purchase (e.g., "2026-12")
+    val desiredChildren: Int = 0, // Future children planned
+    val avatarImage: String? = null, // Base64 encoded image or URL
     val familyMembers: List<Person> = emptyList()
 ) {
     /**

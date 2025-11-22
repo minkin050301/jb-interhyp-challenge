@@ -52,12 +52,69 @@ fun OnboardingScreen(
     var targetType by remember { mutableStateOf("House") } // "House" or "Apartment"
     var sizeSqm by remember { mutableStateOf("") }
     var location by remember { mutableStateOf("") }
+    var targetDate by remember { mutableStateOf("") }
     var age by remember { mutableStateOf("") }
     var netIncome by remember { mutableStateOf("") } // monthly
+    var futureIncome by remember { mutableStateOf("") }
     var currentWealth by remember { mutableStateOf("") }
     var monthlyExpenses by remember { mutableStateOf("") }
+    var existingCredits by remember { mutableStateOf("") }
     var adults by remember { mutableStateOf("") }
     var children by remember { mutableStateOf("") }
+    var desiredChildren by remember { mutableStateOf("") }
+
+    // Load saved profile data on initialization
+    LaunchedEffect(Unit) {
+        viewModel.loadSavedProfile()
+    }
+
+    // Sync ViewModel state to local form fields when data is loaded
+    LaunchedEffect(uiState) {
+        if (uiState.name.isNotBlank() && userName.isBlank()) {
+            userName = uiState.name
+        }
+        if (uiState.age > 0 && age.isBlank()) {
+            age = uiState.age.toString()
+        }
+        if (uiState.monthlyIncome > 0 && netIncome.isBlank()) {
+            netIncome = uiState.monthlyIncome.toString()
+        }
+        if (uiState.futureMonthlyIncome != null && futureIncome.isBlank()) {
+            futureIncome = uiState.futureMonthlyIncome.toString()
+        }
+        if (uiState.monthlyExpenses > 0 && monthlyExpenses.isBlank()) {
+            monthlyExpenses = uiState.monthlyExpenses.toString()
+        }
+        if (uiState.currentEquity > 0 && currentWealth.isBlank()) {
+            currentWealth = uiState.currentEquity.toString()
+        }
+        if (uiState.existingCredits > 0 && existingCredits.isBlank()) {
+            existingCredits = uiState.existingCredits.toString()
+        }
+        if (uiState.desiredLocation.isNotBlank() && location.isBlank()) {
+            location = uiState.desiredLocation
+        }
+        if (uiState.desiredPropertySize > 0 && sizeSqm.isBlank()) {
+            sizeSqm = uiState.desiredPropertySize.toString()
+        }
+        if (uiState.desiredPropertyType == PropertyType.HOUSE) {
+            targetType = "House"
+        } else if (uiState.desiredPropertyType == PropertyType.APARTMENT) {
+            targetType = "Apartment"
+        }
+        if (!uiState.targetDate.isNullOrBlank() && targetDate.isBlank()) {
+            targetDate = uiState.targetDate!!
+        }
+        if (uiState.desiredChildren > 0 && desiredChildren.isBlank()) {
+            desiredChildren = uiState.desiredChildren.toString()
+        }
+        if (uiState.numberOfAdults > 0 && adults.isBlank()) {
+            adults = uiState.numberOfAdults.toString()
+        }
+        if (uiState.numberOfChildren > 0 && children.isBlank()) {
+            children = uiState.numberOfChildren.toString()
+        }
+    }
 
     // Handle completion
     LaunchedEffect(uiState.isCompleted) {
@@ -68,6 +125,26 @@ fun OnboardingScreen(
 
     fun toDoubleSafe(s: String): Double? = s.replace(',', '.').toDoubleOrNull()
     fun toIntSafe(s: String): Int? = s.toIntOrNull()
+    
+    // Helper function to sync form fields to ViewModel
+    fun syncFormToViewModel() {
+        viewModel.updateName(userName)
+        toIntSafe(age)?.let { viewModel.updateAge(it) }
+        toDoubleSafe(netIncome)?.let { viewModel.updateMonthlyIncome(it) }
+        viewModel.updateFutureMonthlyIncome(toDoubleSafe(futureIncome))
+        toDoubleSafe(monthlyExpenses)?.let { viewModel.updateMonthlyExpenses(it) }
+        toDoubleSafe(currentWealth)?.let { viewModel.updateCurrentEquity(it) }
+        toDoubleSafe(existingCredits)?.let { viewModel.updateExistingCredits(it) }
+        viewModel.updateDesiredLocation(location)
+        toDoubleSafe(sizeSqm)?.let { viewModel.updateDesiredPropertySize(it) }
+        viewModel.updateDesiredPropertyType(
+            if (targetType == "House") PropertyType.HOUSE else PropertyType.APARTMENT
+        )
+        viewModel.updateTargetDate(targetDate.ifBlank { null })
+        toIntSafe(desiredChildren)?.let { viewModel.updateDesiredChildren(it) }
+        toIntSafe(adults)?.let { viewModel.updateNumberOfAdults(it) }
+        toIntSafe(children)?.let { viewModel.updateNumberOfChildren(it) }
+    }
 
     val greetingValid by remember(userName) { mutableStateOf(userName.isNotBlank()) }
     val targetValid by remember(targetType, sizeSqm, location) {
@@ -143,6 +220,7 @@ fun OnboardingScreen(
                         }
                         NumberField(label = "Size (sqm)", value = sizeSqm, onValueChange = { sizeSqm = it })
                         TextFieldSimple(label = "Location (city/region)", value = location, onValueChange = { location = it })
+                        TextFieldSimple(label = "Target date (e.g., 2026-12) [Optional]", value = targetDate, onValueChange = { targetDate = it })
                     }
                 }
             }
@@ -153,12 +231,15 @@ fun OnboardingScreen(
                         if (userName.isNotBlank()) Text("Hi $userName!")
                         NumberField(label = "Age", value = age, onValueChange = { age = it })
                         NumberField(label = "Net income (per month)", value = netIncome, onValueChange = { netIncome = it })
+                        NumberField(label = "Future income (per month) [Optional]", value = futureIncome, onValueChange = { futureIncome = it })
                         NumberField(label = "Current wealth (savings)", value = currentWealth, onValueChange = { currentWealth = it })
                         NumberField(label = "Monthly expenses", value = monthlyExpenses, onValueChange = { monthlyExpenses = it })
+                        NumberField(label = "Existing credits (per month) [Optional]", value = existingCredits, onValueChange = { existingCredits = it })
                         Divider()
                         SectionTitle("Household composition")
                         NumberField(label = "Adults", value = adults, onValueChange = { adults = it })
                         NumberField(label = "Children", value = children, onValueChange = { children = it })
+                        NumberField(label = "Desired future children [Optional]", value = desiredChildren, onValueChange = { desiredChildren = it })
                     }
                 }
             }
@@ -168,10 +249,14 @@ fun OnboardingScreen(
                         Text("Summary", style = MaterialTheme.typography.titleLarge)
                         if (userName.isNotBlank()) Text("Thanks, $userName!")
                         Text("Target: $targetType, ${sizeSqm.ifBlank { "?" }} sqm in ${location.ifBlank { "?" }}")
+                        if (targetDate.isNotBlank()) Text("Target date: $targetDate")
                         Text(
                             "Personal: age ${age.ifBlank { "?" }}, net income ${netIncome.ifBlank { "?" }}, wealth ${currentWealth.ifBlank { "?" }}, expenses ${monthlyExpenses.ifBlank { "?" }}"
                         )
+                        if (futureIncome.isNotBlank()) Text("Future income: $futureIncome")
+                        if (existingCredits.isNotBlank()) Text("Existing credits: $existingCredits")
                         Text("Household: ${adults.ifBlank { "?" }} adults, ${children.ifBlank { "?" }} children")
+                        if (desiredChildren.isNotBlank()) Text("Desired future children: $desiredChildren")
                     }
                 }
             }
@@ -179,7 +264,11 @@ fun OnboardingScreen(
 
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
             Button(onClick = {
-                if (currentStep > 0) currentStep -= 1
+                if (currentStep > 0) {
+                    syncFormToViewModel()
+                    viewModel.saveIntermediateProgress()
+                    currentStep -= 1
+                }
             }, enabled = currentStep > 0) {
                 Text("Back")
             }
@@ -192,24 +281,23 @@ fun OnboardingScreen(
             }
 
             if (currentStep < 2) {
-                Button(onClick = { currentStep += 1 }, enabled = canGoNext) { Text("Next") }
+                Button(onClick = { 
+                    syncFormToViewModel()
+                    viewModel.saveIntermediateProgress()
+                    currentStep += 1 
+                }, enabled = canGoNext) { Text("Next") }
             } else if (currentStep == 2) {
-                Button(onClick = { currentStep = 3 }, enabled = canGoNext) { Text("Review") }
+                Button(onClick = { 
+                    syncFormToViewModel()
+                    viewModel.saveIntermediateProgress()
+                    currentStep = 3 
+                }, enabled = canGoNext) { Text("Review") }
             } else {
                 Button(
                     onClick = {
                         // Update ViewModel with all form data before submitting
-                        viewModel.updateName(userName)
-                        toIntSafe(age)?.let { viewModel.updateAge(it) }
-                        toDoubleSafe(netIncome)?.let { viewModel.updateMonthlyIncome(it) }
-                        toDoubleSafe(monthlyExpenses)?.let { viewModel.updateMonthlyExpenses(it) }
-                        toDoubleSafe(currentWealth)?.let { viewModel.updateCurrentEquity(it) }
-                        viewModel.updateDesiredLocation(location)
-                        toDoubleSafe(sizeSqm)?.let { viewModel.updateDesiredPropertySize(it) }
-                        viewModel.updateDesiredPropertyType(
-                            if (targetType == "House") PropertyType.HOUSE else PropertyType.APARTMENT
-                        )
-                        // Submit to save data
+                        syncFormToViewModel()
+                        // Submit to save data permanently
                         viewModel.submitOnboarding()
                     },
                     enabled = targetValid && personalValid && greetingValid && !uiState.isLoading
@@ -229,12 +317,16 @@ fun OnboardingScreen(
                 targetType = "House"
                 sizeSqm = ""
                 location = ""
+                targetDate = ""
                 age = ""
                 netIncome = ""
+                futureIncome = ""
                 currentWealth = ""
                 monthlyExpenses = ""
+                existingCredits = ""
                 adults = ""
                 children = ""
+                desiredChildren = ""
             }) {
                 Text("Reset")
             }
