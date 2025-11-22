@@ -49,11 +49,6 @@ fun GoalSelectionScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     
-    // Debug: Log state changes
-    LaunchedEffect(uiState) {
-        println("DEBUG: GoalSelectionScreen - State changed: isLoading=${uiState.isLoading}, errorMessage=${uiState.errorMessage}, listings.size=${uiState.listings.size}")
-    }
-    
     // Search for properties when screen loads
     LaunchedEffect(location, size, propertyType) {
         viewModel.searchProperties(location, size, propertyType)
@@ -80,35 +75,21 @@ fun GoalSelectionScreen(
             modifier = Modifier.padding(bottom = 8.dp)
         )
         
-        // Debug: Show listing count and details
+        // Show listing count
         if (uiState.listings.isNotEmpty() && !uiState.isLoading) {
-            Column(modifier = Modifier.padding(bottom = 8.dp)) {
-                Text(
-                    text = "Found ${uiState.listings.size} properties",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                // Debug: Show first listing details
-                if (uiState.listings.isNotEmpty()) {
-                    val first = uiState.listings.first()
-                    Text(
-                        text = "First: ${first.title ?: "No title"}, Price: ${first.buyingPrice}, Size: ${first.squareMeter}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 10.sp
-                    )
-                }
-            }
+            Text(
+                text = "Found ${uiState.listings.size} properties",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = 12.dp)
+            )
         }
         
         // Content area - use fixed height since we're in a scrollable parent
         Box(modifier = Modifier.height(500.dp).fillMaxWidth()) {
             when {
-                uiState.isLoading -> {
-                    LaunchedEffect(Unit) {
-                        println("DEBUG: GoalSelectionScreen - Showing loading state")
-                    }
-                    Box(
+            uiState.isLoading -> {
+                Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
@@ -123,9 +104,6 @@ fun GoalSelectionScreen(
             }
             
             uiState.errorMessage != null -> {
-                LaunchedEffect(uiState.errorMessage) {
-                    println("DEBUG: GoalSelectionScreen - Showing error state: ${uiState.errorMessage}")
-                }
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
@@ -157,9 +135,6 @@ fun GoalSelectionScreen(
             }
             
             uiState.listings.isEmpty() && !uiState.isLoading -> {
-                LaunchedEffect(Unit) {
-                    println("DEBUG: GoalSelectionScreen - Showing empty state")
-                }
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
@@ -183,73 +158,31 @@ fun GoalSelectionScreen(
             }
             
                 uiState.listings.isNotEmpty() && !uiState.isLoading && uiState.errorMessage == null -> {
-                    // Debug: Log listings
-                    LaunchedEffect(uiState.listings.size) {
-                        println("DEBUG: GoalSelectionScreen - Showing listings (${uiState.listings.size} items)")
-                        println("DEBUG: Rendering ${uiState.listings.size} listings")
-                        uiState.listings.forEachIndexed { index, listing ->
-                            println("DEBUG: Listing $index - ID: ${listing.id}, Title: ${listing.title}, Price: ${listing.buyingPrice}, Size: ${listing.squareMeter}")
-                        }
-                    }
-                    
-                    // Debug logging outside LazyColumn
-                    LaunchedEffect(uiState.listings.size) {
-                        println("DEBUG: LazyColumn - About to compose ${uiState.listings.size} items")
-                        println("DEBUG: LazyColumn - Listings list: ${uiState.listings.map { it.id }}")
-                    }
-                    
                     Column(modifier = Modifier.fillMaxSize()) {
-                        // LazyColumn to take available space - add visible background for debugging
+                        // LazyColumn to take available space
                         LazyColumn(
                             verticalArrangement = Arrangement.spacedBy(12.dp),
-                            contentPadding = PaddingValues(vertical = 8.dp, horizontal = 8.dp),
+                            contentPadding = PaddingValues(vertical = 4.dp),
                             modifier = Modifier
                                 .weight(1f)
                                 .fillMaxWidth()
-                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)) // Debug: visible background
                         ) {
-                            // Debug: Add a visible test item
-                            item {
-                                Card(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(bottom = 8.dp),
-                                    colors = CardDefaults.cardColors(
-                                        containerColor = MaterialTheme.colorScheme.primaryContainer
-                                    )
-                                ) {
-                                    Text(
-                                        text = "TEST: LazyColumn is rendering! Found ${uiState.listings.size} properties. Scroll down to see them.",
-                                        modifier = Modifier.padding(16.dp),
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
-                            }
-                            
                             // Use items(items = ...) API - always add items (empty list is handled by LazyColumn)
                             items(
                                 items = uiState.listings,
                                 key = { it.id }
                             ) { listing ->
-                                // Debug log when item is composed
-                                println("DEBUG: LazyColumn - Composing item for listing: ${listing.id}, Title: ${listing.title}")
-                                // Add padding to ensure item is visible
-                                Box(modifier = Modifier.padding(horizontal = 8.dp)) {
-                                    PropertyListingCard(
-                                        listing = listing,
-                                        isSelected = uiState.selectedListing?.id == listing.id,
-                                        onSelect = { 
-                                            println("DEBUG: Selected listing: ${listing.id}")
-                                            viewModel.selectListing(listing) 
-                                        }
-                                    )
-                                }
+                                PropertyListingCard(
+                                    listing = listing,
+                                    isSelected = uiState.selectedListing?.id == listing.id,
+                                    onSelect = { 
+                                        viewModel.selectListing(listing) 
+                                    }
+                                )
                             }
                         }
                         
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
                         
                         Button(
                             onClick = {
@@ -271,9 +204,6 @@ fun GoalSelectionScreen(
                 }
             
                 else -> {
-                    LaunchedEffect(uiState.isLoading, uiState.listings.size, uiState.errorMessage) {
-                        println("DEBUG: GoalSelectionScreen - Reached else branch (unexpected state): isLoading=${uiState.isLoading}, listings=${uiState.listings.size}, error=${uiState.errorMessage}")
-                    }
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
@@ -295,16 +225,10 @@ private fun PropertyListingCard(
     isSelected: Boolean,
     onSelect: () -> Unit
 ) {
-    // Debug: Log card composition
-    println("DEBUG: PropertyListingCard composing for ID: ${listing.id}, Title: ${listing.title}")
-    
     val httpClient: HttpClient = koinInject()
     var imageBitmap by remember(listing.id) { mutableStateOf<ImageBitmap?>(null) }
     var imageLoadingError by remember(listing.id) { mutableStateOf<String?>(null) }
     val imageUrl = listing.getMainImageUrl()
-    
-    // Debug: Log image URL
-    println("DEBUG: PropertyListingCard - Image URL: $imageUrl")
     
     // Load image if URL is available
     LaunchedEffect(imageUrl) {
@@ -327,19 +251,20 @@ private fun PropertyListingCard(
         }
     }
     
-    // Debug: Ensure card has minimum height
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .defaultMinSize(minHeight = 150.dp)
+            .defaultMinSize(minHeight = 140.dp)
             .clickable { onSelect() }
             .border(
-                width = if (isSelected) 3.dp else 0.dp,
+                width = if (isSelected) 2.dp else 0.dp,
                 color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(16.dp)
             ),
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = if (isSelected) 4.dp else 2.dp
+        ),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         )
@@ -347,14 +272,14 @@ private fun PropertyListingCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+                .padding(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             // Property Image
             Box(
                 modifier = Modifier
-                    .size(120.dp)
-                    .clip(RoundedCornerShape(8.dp))
+                    .size(110.dp)
+                    .clip(RoundedCornerShape(12.dp))
                     .background(MaterialTheme.colorScheme.surfaceVariant),
                 contentAlignment = Alignment.Center
             ) {
@@ -389,23 +314,24 @@ private fun PropertyListingCard(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 // Title
                 if (!listing.title.isNullOrBlank()) {
                     Text(
                         text = listing.title!!,
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.SemiBold,
                         maxLines = 2,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = MaterialTheme.colorScheme.onSurface,
+                        lineHeight = 20.sp
                     )
                 }
                 
                 // Location
                 Text(
                     text = listing.getLocationDisplay(),
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 
@@ -413,21 +339,22 @@ private fun PropertyListingCard(
                 if (listing.buyingPrice != null) {
                     Text(
                         text = listing.getFormattedPrice(),
-                        style = MaterialTheme.typography.titleLarge,
+                        style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(top = 2.dp)
                     )
                 }
                 
                 // Size, rooms, and price per sqm
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier.padding(top = 4.dp)
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier = Modifier.padding(top = 2.dp)
                 ) {
                     if (listing.squareMeter != null) {
                         Text(
                             text = listing.getFormattedSize(),
-                            style = MaterialTheme.typography.bodyMedium,
+                            style = MaterialTheme.typography.bodySmall,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurface
                         )
@@ -435,7 +362,7 @@ private fun PropertyListingCard(
                     listing.rooms?.let {
                         Text(
                             text = listing.getFormattedRooms(),
-                            style = MaterialTheme.typography.bodyMedium,
+                            style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                     }
@@ -453,7 +380,7 @@ private fun PropertyListingCard(
             if (isSelected) {
                 Box(
                     modifier = Modifier
-                        .size(28.dp)
+                        .size(32.dp)
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.primary),
                     contentAlignment = Alignment.Center
@@ -461,7 +388,7 @@ private fun PropertyListingCard(
                     Text(
                         text = "✓",
                         color = Color.White,
-                        fontSize = 18.sp,
+                        fontSize = 20.sp,
                         fontWeight = FontWeight.Bold
                     )
                 }
