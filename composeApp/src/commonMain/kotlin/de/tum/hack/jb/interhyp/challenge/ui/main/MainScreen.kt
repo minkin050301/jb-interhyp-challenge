@@ -24,20 +24,21 @@ import de.tum.hack.jb.interhyp.challenge.ui.components.Settings
 import de.tum.hack.jb.interhyp.challenge.ui.insights.InsightsScreen
 import de.tum.hack.jb.interhyp.challenge.ui.settings.SettingsScreen
 import de.tum.hack.jb.interhyp.challenge.ui.profile.ProfileEditScreen
+import de.tum.hack.jb.interhyp.challenge.presentation.dashboard.DashboardViewModel
 import de.tum.hack.jb.interhyp.challenge.presentation.insights.InsightsViewModel
 import de.tum.hack.jb.interhyp.challenge.presentation.theme.ThemeViewModel
+import androidx.compose.runtime.collectAsState
 import org.koin.compose.koinInject
 
 @Composable
 fun MainScreen(themeViewModel: ThemeViewModel) {
-    // Placeholder progress; in future wire to persisted user data / ViewModel StateFlow
-    val progress = 0.35f
-    
     // Simple state-based navigation
     var currentScreen by remember { mutableStateOf<String?>("home") }
 
-    // Inject InsightsViewModel
+    // Inject ViewModels
     val insightsViewModel: InsightsViewModel = koinInject()
+    val dashboardViewModel: DashboardViewModel = koinInject()
+    val uiState by dashboardViewModel.uiState.collectAsState()
 
     when (currentScreen) {
         "insights" -> {
@@ -78,8 +79,33 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
                 ) {
                     Text("Dashboard", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary)
                     Text("Your savings progress", style = MaterialTheme.typography.titleMedium)
-                    LinearProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth())
-                    Text("${(progress * 100).toInt()}% complete", style = MaterialTheme.typography.bodyLarge)
+                    
+                    if (uiState.isLoading) {
+                        LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                        Text("Loading...", style = MaterialTheme.typography.bodyLarge)
+                    } else if (uiState.errorMessage != null) {
+                        Text(
+                            text = "Error: ${uiState.errorMessage}",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    } else {
+                        LinearProgressIndicator(
+                            progress = { uiState.savingsProgress },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Text(
+                            "${(uiState.savingsProgress * 100).toInt()}% complete",
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        if (uiState.targetSavings > 0) {
+                            Text(
+                                "${uiState.currentSavings.toInt()} / ${uiState.targetSavings.toInt()}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
                 }
             }
         }

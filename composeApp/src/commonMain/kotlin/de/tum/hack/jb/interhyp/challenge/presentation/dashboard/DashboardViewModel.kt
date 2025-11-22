@@ -5,8 +5,10 @@ import androidx.lifecycle.viewModelScope
 import de.tum.hack.jb.interhyp.challenge.data.network.NetworkResult
 import de.tum.hack.jb.interhyp.challenge.data.repository.BudgetCalculation
 import de.tum.hack.jb.interhyp.challenge.data.repository.BudgetRepository
+import de.tum.hack.jb.interhyp.challenge.data.repository.BudgetTrackingRepository
 import de.tum.hack.jb.interhyp.challenge.data.repository.PropertyRepository
 import de.tum.hack.jb.interhyp.challenge.data.repository.UserRepository
+import kotlinx.coroutines.flow.first
 import de.tum.hack.jb.interhyp.challenge.domain.model.User
 import de.tum.hack.jb.interhyp.challenge.domain.model.UserProfile
 import kotlinx.coroutines.flow.*
@@ -54,7 +56,8 @@ data class DashboardUiState(
 class DashboardViewModel(
     private val userRepository: UserRepository,
     private val propertyRepository: PropertyRepository,
-    private val budgetRepository: BudgetRepository
+    private val budgetRepository: BudgetRepository,
+    private val budgetTrackingRepository: BudgetTrackingRepository
 ) : ViewModel() {
     
     private val _uiState = MutableStateFlow(DashboardUiState())
@@ -138,7 +141,12 @@ class DashboardViewModel(
             when (result) {
                 is NetworkResult.Success -> {
                     val calculation = result.data
-                    val currentSavings = userProfile.currentEquity
+                    
+                    // Get bank account balance - it should already reflect user's total wealth
+                    // (bank account is synced with user.wealth, so we use bank balance as the source of truth)
+                    val bankAccount = budgetTrackingRepository.getBankAccount(userProfile.userId).first()
+                    // Use bank account balance if available, otherwise fall back to user wealth
+                    val currentSavings = bankAccount?.balance ?: userProfile.currentEquity
                     val targetSavings = calculation.requiredEquity
                     val progress = if (targetSavings > 0) {
                         (currentSavings / targetSavings).toFloat().coerceIn(0f, 1f)

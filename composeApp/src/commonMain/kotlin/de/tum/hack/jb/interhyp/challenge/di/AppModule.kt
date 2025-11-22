@@ -53,7 +53,7 @@ val dataModule = module {
  */
 val presentationModule = module {
     factory { OnboardingViewModel(get(), get(), get()) }
-    factory { DashboardViewModel(get(), get(), get()) }
+    factory { DashboardViewModel(get(), get(), get(), get()) }
     factory { ProfileViewModel(get()) }
     factory { InsightsViewModel(get(), get(), get(), get()) }
     single { ThemeViewModel() }
