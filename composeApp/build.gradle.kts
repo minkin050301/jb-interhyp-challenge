@@ -8,7 +8,9 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.kotlinx.serialization)
-    alias(libs.plugins.sqldelight)
+    // SQLDelight plugin removed - not compatible with wasmJs
+    // Re-enable when needed and configure to exclude wasmJs
+    // alias(libs.plugins.sqldelight)
 }
 
 kotlin {
@@ -67,11 +69,7 @@ kotlin {
         
         jsMain.dependencies {
             implementation(libs.ktor.client.js)
-            implementation(libs.sqldelight.js)
-            
-            // SQLDelight runtime and coroutines (JS)
-            implementation(libs.sqldelight.runtime)
-            implementation(libs.sqldelight.coroutines)
+            // SQLDelight not included for JS/WASM as it doesn't support wasmJs
         }
         
         commonMain.dependencies {
