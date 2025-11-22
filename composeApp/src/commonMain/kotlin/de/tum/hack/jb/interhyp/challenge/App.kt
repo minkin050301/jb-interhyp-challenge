@@ -6,11 +6,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.key
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import de.tum.hack.jb.interhyp.challenge.ui.theme.AppTheme
 import de.tum.hack.jb.interhyp.challenge.ui.main.MainScreen
 import de.tum.hack.jb.interhyp.challenge.ui.onboarding.OnboardingScreen
 import de.tum.hack.jb.interhyp.challenge.presentation.theme.ThemeViewModel
+import de.tum.hack.jb.interhyp.challenge.util.LocaleManager
+import de.tum.hack.jb.interhyp.challenge.util.ProvideAppLocale
 import org.koin.compose.koinInject
 
 @Composable
@@ -21,17 +24,23 @@ fun App(themeViewModel: ThemeViewModel? = null) {
     val viewModel = themeViewModel ?: remember { ThemeViewModel() }
     
     val themePreference by viewModel.themePreference.collectAsState()
+    val currentLocale by LocaleManager.currentLocale.collectAsState()
     
-    AppTheme(themePreference = themePreference) {
-        var showMain by remember { mutableStateOf(false) }
+    // Use key() to force recomposition when locale changes
+    key(currentLocale) {
+        ProvideAppLocale(locale = currentLocale) {
+            AppTheme(themePreference = themePreference) {
+                var showMain by remember { mutableStateOf(false) }
 
-        if (showMain) {
-            MainScreen(themeViewModel = viewModel)
-        } else {
-            OnboardingScreen(
-                onSkip = { showMain = true },
-                onComplete = { showMain = true }
-            )
+                if (showMain) {
+                    MainScreen(themeViewModel = viewModel)
+                } else {
+                    OnboardingScreen(
+                        onSkip = { showMain = true },
+                        onComplete = { showMain = true }
+                    )
+                }
+            }
         }
     }
 }

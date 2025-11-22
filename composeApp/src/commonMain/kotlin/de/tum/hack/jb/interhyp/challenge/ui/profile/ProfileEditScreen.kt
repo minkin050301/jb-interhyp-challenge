@@ -40,6 +40,9 @@ import de.tum.hack.jb.interhyp.challenge.domain.model.PropertyType
 import de.tum.hack.jb.interhyp.challenge.presentation.profile.ProfileViewModel
 import de.tum.hack.jb.interhyp.challenge.ui.components.DatePickerField
 import org.koin.compose.koinInject
+import org.jetbrains.compose.resources.stringResource
+import jb_interhyp_challenge.composeapp.generated.resources.Res
+import jb_interhyp_challenge.composeapp.generated.resources.*
 
 @Composable
 fun ProfileEditScreen(
@@ -123,7 +126,7 @@ fun ProfileEditScreen(
     ) {
         Spacer(Modifier.height(32.dp))
         Text(
-            "Edit Profile",
+            stringResource(Res.string.edit_profile),
             style = MaterialTheme.typography.headlineMedium,
             color = MaterialTheme.colorScheme.primary
         )
@@ -135,26 +138,26 @@ fun ProfileEditScreen(
         // Personal Information
         ElevatedCard(modifier = Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                SectionTitle("Personal Information")
-                TextFieldSimple(label = "Your name", value = userName, onValueChange = { userName = it })
-                NumberField(label = "Age", value = age, onValueChange = { age = it })
+                SectionTitle(stringResource(Res.string.personal_info))
+                TextFieldSimple(label = stringResource(Res.string.your_name), value = userName, onValueChange = { userName = it })
+                NumberField(label = stringResource(Res.string.age), value = age, onValueChange = { age = it })
             }
         }
 
         // Financial Information
         ElevatedCard(modifier = Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                SectionTitle("Financial Information")
-                NumberField(label = "Net income (per month)", value = netIncome, onValueChange = { netIncome = it })
+                SectionTitle(stringResource(Res.string.financial_info))
+                NumberField(label = stringResource(Res.string.net_income_per_month), value = netIncome, onValueChange = { netIncome = it })
                 
                 // Yearly income increase slider
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
-                        "Future income (yearly increase) [Optional]",
+                        stringResource(Res.string.future_income_optional),
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Text(
-                        "${(yearlyIncomeIncrease * 10).toInt() / 10.0}% per year",
+                        "${(yearlyIncomeIncrease * 10).toInt() / 10.0}% ${stringResource(Res.string.per_year).replace("%s%", "").trim()}",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.primary
                     )
@@ -167,52 +170,52 @@ fun ProfileEditScreen(
                     )
                 }
                 
-                NumberField(label = "Current wealth (savings)", value = currentWealth, onValueChange = { currentWealth = it })
-                NumberField(label = "Monthly expenses", value = monthlyExpenses, onValueChange = { monthlyExpenses = it })
-                NumberField(label = "Existing credits (per month) [Optional]", value = existingCredits, onValueChange = { existingCredits = it })
+                NumberField(label = stringResource(Res.string.current_wealth_savings), value = currentWealth, onValueChange = { currentWealth = it })
+                NumberField(label = stringResource(Res.string.monthly_expenses), value = monthlyExpenses, onValueChange = { monthlyExpenses = it })
+                NumberField(label = stringResource(Res.string.existing_credits_optional), value = existingCredits, onValueChange = { existingCredits = it })
             }
         }
 
         // Property Target
         ElevatedCard(modifier = Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                SectionTitle("Property Target")
+                SectionTitle(stringResource(Res.string.property_target))
                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                     RadioOption(
-                        label = "House",
+                        label = stringResource(Res.string.house),
                         selected = targetType == "House",
                         onSelect = { targetType = "House" }
                     )
                     RadioOption(
-                        label = "Apartment",
+                        label = stringResource(Res.string.apartment),
                         selected = targetType == "Apartment",
                         onSelect = { targetType = "Apartment" }
                     )
                 }
-                NumberField(label = "Size (sqm)", value = sizeSqm, onValueChange = { sizeSqm = it })
+                NumberField(label = stringResource(Res.string.size_sqm), value = sizeSqm, onValueChange = { sizeSqm = it })
                 LocationDropdown(value = location, onValueChange = { location = it })
-                DatePickerField(label = "Target date [Optional]", value = targetDate, onValueChange = { targetDate = it })
+                DatePickerField(label = stringResource(Res.string.target_date_optional), value = targetDate, onValueChange = { targetDate = it })
             }
         }
 
         // Household
         ElevatedCard(modifier = Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                SectionTitle("Household Composition")
+                SectionTitle(stringResource(Res.string.household_composition))
                 NumberDropdown(
-                    label = "Adults",
+                    label = stringResource(Res.string.adults),
                     value = adults,
                     onValueChange = { adults = it },
                     options = listOf(1, 2, 3, 4, 5)
                 )
                 NumberDropdown(
-                    label = "Children",
+                    label = stringResource(Res.string.children),
                     value = children,
                     onValueChange = { children = it },
                     options = listOf(0, 1, 2, 3, 4, 5, 6)
                 )
                 NumberDropdown(
-                    label = "Desired future children [Optional]",
+                    label = stringResource(Res.string.desired_future_children_optional),
                     value = desiredChildren,
                     onValueChange = { desiredChildren = it },
                     options = listOf(0, 1, 2, 3, 4)
@@ -229,7 +232,7 @@ fun ProfileEditScreen(
             modifier = Modifier.fillMaxWidth()
         ) {
             Button(onClick = onBack, modifier = Modifier.weight(1f)) {
-                Text("Cancel")
+                Text(stringResource(Res.string.cancel))
             }
 
             Button(
@@ -265,7 +268,7 @@ fun ProfileEditScreen(
                 if (uiState.isLoading) {
                     CircularProgressIndicator()
                 } else {
-                    Text("Save Changes")
+                    Text(stringResource(Res.string.save_changes))
                 }
             }
         }
@@ -275,7 +278,7 @@ fun ProfileEditScreen(
             Spacer(Modifier.height(8.dp))
             ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Error", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(Res.string.error), style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.error)
                     Text(errorMsg, color = MaterialTheme.colorScheme.error)
                 }
             }

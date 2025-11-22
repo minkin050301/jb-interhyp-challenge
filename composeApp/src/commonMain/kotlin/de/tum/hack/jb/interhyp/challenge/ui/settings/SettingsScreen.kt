@@ -14,14 +14,22 @@ import de.tum.hack.jb.interhyp.challenge.ui.components.NavItem
 import de.tum.hack.jb.interhyp.challenge.ui.components.Settings
 import de.tum.hack.jb.interhyp.challenge.ui.theme.ThemePreference
 import de.tum.hack.jb.interhyp.challenge.presentation.theme.ThemeViewModel
+import de.tum.hack.jb.interhyp.challenge.ui.locale.LocalePreference
+import de.tum.hack.jb.interhyp.challenge.presentation.locale.LocaleViewModel
+import org.koin.compose.koinInject
+import org.jetbrains.compose.resources.stringResource
+import jb_interhyp_challenge.composeapp.generated.resources.Res
+import jb_interhyp_challenge.composeapp.generated.resources.*
 
 @Composable
 fun SettingsScreen(
     themeViewModel: ThemeViewModel,
+    localeViewModel: LocaleViewModel = koinInject(),
     onNavigate: (String) -> Unit = {},
     onNavigateToProfile: () -> Unit = {}
 ) {
     val themePreference by themeViewModel.themePreference.collectAsState()
+    val localePreference by localeViewModel.localePreference.collectAsState()
     
     AppScaffold(
         navItemsLeft = listOf(NavItem(id = "insights", label = "Insights", icon = Insights)),
@@ -40,7 +48,7 @@ fun SettingsScreen(
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
             Text(
-                text = "Settings",
+                text = stringResource(Res.string.settings_title),
                 style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.primary
             )
@@ -57,7 +65,7 @@ fun SettingsScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        text = "Profile",
+                        text = stringResource(Res.string.profile_title),
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.padding(bottom = 8.dp)
@@ -67,7 +75,7 @@ fun SettingsScreen(
                         onClick = onNavigateToProfile,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Edit Profile Information")
+                        Text(stringResource(Res.string.edit_profile_information))
                     }
                 }
             }
@@ -84,7 +92,7 @@ fun SettingsScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        text = "Appearance",
+                        text = stringResource(Res.string.theme),
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.padding(bottom = 8.dp)
@@ -104,12 +112,60 @@ fun SettingsScreen(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = preference.name.lowercase().replaceFirstChar { it.uppercase() },
+                                text = when (preference) {
+                                    ThemePreference.LIGHT -> stringResource(Res.string.theme_light)
+                                    ThemePreference.DARK -> stringResource(Res.string.theme_dark)
+                                    ThemePreference.SYSTEM -> stringResource(Res.string.theme_system)
+                                },
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier
                                     .weight(1f)
                                     .clickable { themeViewModel.setThemePreference(preference) }
+                            )
+                        }
+                    }
+                }
+            }
+            
+            // Language Section
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = stringResource(Res.string.language),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    
+                    // Language Selection
+                    LocalePreference.values().forEach { preference ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp),
+                            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = localePreference == preference,
+                                onClick = { localeViewModel.setLocalePreference(preference) }
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = preference.displayName,
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clickable { localeViewModel.setLocalePreference(preference) }
                             )
                         }
                     }

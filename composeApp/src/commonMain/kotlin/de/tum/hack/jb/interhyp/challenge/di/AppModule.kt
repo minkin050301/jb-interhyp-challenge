@@ -14,6 +14,7 @@ import de.tum.hack.jb.interhyp.challenge.presentation.insights.InsightsViewModel
 import de.tum.hack.jb.interhyp.challenge.presentation.onboarding.OnboardingViewModel
 import de.tum.hack.jb.interhyp.challenge.presentation.profile.ProfileViewModel
 import de.tum.hack.jb.interhyp.challenge.presentation.theme.ThemeViewModel
+import de.tum.hack.jb.interhyp.challenge.presentation.locale.LocaleViewModel
 import io.ktor.client.*
 import org.koin.dsl.module
 
@@ -57,6 +58,7 @@ val presentationModule = module {
     factory { ProfileViewModel(get()) }
     factory { InsightsViewModel(get(), get(), get(), get()) }
     single { ThemeViewModel() }
+    single { LocaleViewModel() }
 }
 
 /**

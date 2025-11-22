@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -56,7 +57,12 @@ import org.jetbrains.skia.Image as SkiaImage
 import de.tum.hack.jb.interhyp.challenge.ui.util.byteArrayToImageBitmap
 import de.tum.hack.jb.interhyp.challenge.domain.model.PropertyType
 import de.tum.hack.jb.interhyp.challenge.presentation.onboarding.OnboardingViewModel
+import de.tum.hack.jb.interhyp.challenge.util.LocaleManager
+import de.tum.hack.jb.interhyp.challenge.ui.locale.LocalePreference
 import org.koin.compose.koinInject
+import org.jetbrains.compose.resources.stringResource
+import jb_interhyp_challenge.composeapp.generated.resources.Res
+import jb_interhyp_challenge.composeapp.generated.resources.*
 
 @Composable
 fun OnboardingScreen(
@@ -200,32 +206,41 @@ fun OnboardingScreen(
 
     val scroll = rememberScrollState()
     val focusManager = getFocusManager()
+    
+    // Language switcher state
+    var showLanguageMenu by remember { mutableStateOf(false) }
+    val currentLocale by LocaleManager.currentLocale.collectAsState()
 
-    Column(
+    Box(
         modifier = Modifier
             .background(MaterialTheme.colorScheme.background)
             .fillMaxSize()
-            .verticalScroll(scroll)
-            .pointerInput(focusManager) {
-                detectTapGestures {
-                    focusManager?.clearFocus()
-                }
-            }
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(scroll)
+                .pointerInput(focusManager) {
+                    detectTapGestures {
+                        focusManager?.clearFocus()
+                    }
+                }
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
         Spacer(Modifier.height(32.dp))
+        
         Text(
-            "Home Savings Setup",
+            stringResource(Res.string.onboarding_title),
             style = MaterialTheme.typography.headlineMedium,
             color = MaterialTheme.colorScheme.primary
         )
         val stepLabel = when (currentStep) {
-            0 -> "Step 1 of $totalSteps · Welcome"
-            1 -> "Step 2 of $totalSteps · Your Target"
-            2 -> "Step 3 of $totalSteps · About You"
-            3 -> "Step 4 of $totalSteps · Selfie Verification"
-            else -> "Summary"
+            0 -> "${stringResource(Res.string.step_1_of, totalSteps)} · ${stringResource(Res.string.step_welcome)}"
+            1 -> "${stringResource(Res.string.step_2_of, totalSteps)} · ${stringResource(Res.string.step_your_target)}"
+            2 -> "${stringResource(Res.string.step_3_of, totalSteps)} · ${stringResource(Res.string.step_about_you)}"
+            3 -> "${stringResource(Res.string.step_4_of, totalSteps)} · ${stringResource(Res.string.step_selfie_verification)}"
+            else -> stringResource(Res.string.summary)
         }
         Text(
             stepLabel, 
@@ -237,12 +252,12 @@ fun OnboardingScreen(
             0 -> {
                 ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        SectionTitle("Welcome")
-                        Text("We're excited to help you plan your home savings. Let's start with your name.")
-                        TextFieldSimple(label = "Your name", value = userName, onValueChange = { userName = it })
+                        SectionTitle(stringResource(Res.string.welcome))
+                        Text(stringResource(Res.string.welcome_message))
+                        TextFieldSimple(label = stringResource(Res.string.your_name), value = userName, onValueChange = { userName = it })
                         // Optional: Allow skipping onboarding to jump straight to main dashboard
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                            Button(onClick = onSkip) { Text("Skip for now") }
+                            Button(onClick = onSkip) { Text(stringResource(Res.string.skip_for_now)) }
                         }
                     }
                 }
@@ -250,41 +265,41 @@ fun OnboardingScreen(
             1 -> {
                 ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        SectionTitle("Your Target")
+                        SectionTitle(stringResource(Res.string.your_target))
                         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                             RadioOption(
-                                label = "House",
+                                label = stringResource(Res.string.house),
                                 selected = targetType == "House",
                                 onSelect = { targetType = "House" }
                             )
                             RadioOption(
-                                label = "Apartment",
+                                label = stringResource(Res.string.apartment),
                                 selected = targetType == "Apartment",
                                 onSelect = { targetType = "Apartment" }
                             )
                         }
-                        NumberField(label = "Size (sqm)", value = sizeSqm, onValueChange = { sizeSqm = it })
+                        NumberField(label = stringResource(Res.string.size_sqm), value = sizeSqm, onValueChange = { sizeSqm = it })
                         LocationDropdown(value = location, onValueChange = { location = it })
-                        DatePickerField(label = "Target date [Optional]", value = targetDate, onValueChange = { targetDate = it })
+                        DatePickerField(label = stringResource(Res.string.target_date_optional), value = targetDate, onValueChange = { targetDate = it })
                     }
                 }
             }
             2 -> {
                 ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        SectionTitle("About You")
-                        if (userName.isNotBlank()) Text("Hi $userName!")
-                        NumberField(label = "Age", value = age, onValueChange = { age = it })
-                        NumberField(label = "Net income (per month)", value = netIncome, onValueChange = { netIncome = it })
+                        SectionTitle(stringResource(Res.string.about_you))
+                        if (userName.isNotBlank()) Text(stringResource(Res.string.hi_user, userName))
+                        NumberField(label = stringResource(Res.string.age), value = age, onValueChange = { age = it })
+                        NumberField(label = stringResource(Res.string.net_income_per_month), value = netIncome, onValueChange = { netIncome = it })
                         
                         // Yearly income increase slider
                         Column(modifier = Modifier.fillMaxWidth()) {
                             Text(
-                                "Future income (yearly increase) [Optional]",
+                                stringResource(Res.string.future_income_optional),
                                 style = MaterialTheme.typography.bodyMedium
                             )
                             Text(
-                                "${(yearlyIncomeIncrease * 10).toInt() / 10.0}% per year",
+                                "${(yearlyIncomeIncrease * 10).toInt() / 10.0}% ${stringResource(Res.string.per_year).replace("%s%", "").trim()}",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.primary
                             )
@@ -297,27 +312,27 @@ fun OnboardingScreen(
                             )
                         }
                         
-                        NumberField(label = "Current wealth (savings)", value = currentWealth, onValueChange = { currentWealth = it })
-                        NumberField(label = "Monthly expenses", value = monthlyExpenses, onValueChange = { monthlyExpenses = it })
-                        NumberField(label = "Existing credits (per month) [Optional]", value = existingCredits, onValueChange = { existingCredits = it })
+                        NumberField(label = stringResource(Res.string.current_wealth_savings), value = currentWealth, onValueChange = { currentWealth = it })
+                        NumberField(label = stringResource(Res.string.monthly_expenses), value = monthlyExpenses, onValueChange = { monthlyExpenses = it })
+                        NumberField(label = stringResource(Res.string.existing_credits_optional), value = existingCredits, onValueChange = { existingCredits = it })
                         Spacer(Modifier.height(8.dp))
                         HorizontalDivider()
                         Spacer(Modifier.height(4.dp))
-                        SectionTitle("Household composition")
+                        SectionTitle(stringResource(Res.string.household_composition))
                         NumberDropdown(
-                            label = "Adults",
+                            label = stringResource(Res.string.adults),
                             value = adults,
                             onValueChange = { adults = it },
                             options = listOf(1, 2, 3, 4, 5)
                         )
                         NumberDropdown(
-                            label = "Children",
+                            label = stringResource(Res.string.children),
                             value = children,
                             onValueChange = { children = it },
                             options = listOf(0, 1, 2, 3, 4, 5, 6)
                         )
                         NumberDropdown(
-                            label = "Desired future children [Optional]",
+                            label = stringResource(Res.string.desired_future_children_optional),
                             value = desiredChildren,
                             onValueChange = { desiredChildren = it },
                             options = listOf(0, 1, 2, 3, 4)
@@ -332,8 +347,8 @@ fun OnboardingScreen(
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        SectionTitle("Your Selfie")
-                        Text("Take a quick selfie to personalize your profile!")
+                        SectionTitle(stringResource(Res.string.your_selfie))
+                        Text(stringResource(Res.string.selfie_message))
 
                         // Display selected selfie
                         if (selfieBytes != null) {
@@ -351,14 +366,14 @@ fun OnboardingScreen(
                                 if (imageBitmap != null) {
                                     Image(
                                         bitmap = imageBitmap,
-                                        contentDescription = "Your selfie",
+                                        contentDescription = stringResource(Res.string.your_selfie_desc),
                                         modifier = Modifier.fillMaxSize(),
                                         contentScale = ContentScale.Crop
                                     )
                                 }
                             }
                             Spacer(Modifier.height(8.dp))
-                            Text("✓ Selfie captured!", color = MaterialTheme.colorScheme.primary)
+                            Text(stringResource(Res.string.selfie_captured), color = MaterialTheme.colorScheme.primary)
                         } else {
                             Box(
                                 modifier = Modifier
@@ -367,7 +382,7 @@ fun OnboardingScreen(
                                     .background(MaterialTheme.colorScheme.surfaceVariant),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Text("No photo yet", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(stringResource(Res.string.no_photo_yet), color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
 
@@ -386,18 +401,18 @@ fun OnboardingScreen(
                         ) { pickImage ->
                             if (selfieBytes == null) {
                                 Button(onClick = pickImage) {
-                                    Text("Take Selfie / Choose Photo")
+                                    Text(stringResource(Res.string.take_selfie_choose_photo))
                                 }
                             } else {
                                 OutlinedButton(onClick = pickImage) {
-                                    Text("Change Photo")
+                                    Text(stringResource(Res.string.change_photo))
                                 }
                             }
                         }
 
                         if (selfieBytes == null) {
                             Text(
-                                "You can also skip this step and add it later",
+                                stringResource(Res.string.skip_selfie_message),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -407,10 +422,10 @@ fun OnboardingScreen(
                         if (uiState.isGeneratingAvatar) {
                             Spacer(Modifier.height(16.dp))
                             CircularProgressIndicator()
-                            Text("Generating your avatar...", style = MaterialTheme.typography.bodyMedium)
+                            Text(stringResource(Res.string.generating_avatar), style = MaterialTheme.typography.bodyMedium)
                         } else if (uiState.avatarImage != null) {
                             Spacer(Modifier.height(16.dp))
-                            Text("Your AI-Generated Avatar", style = MaterialTheme.typography.titleMedium)
+                            Text(stringResource(Res.string.view_avatar), style = MaterialTheme.typography.titleMedium)
                             Spacer(Modifier.height(8.dp))
                             Box(
                                 modifier = Modifier
@@ -427,13 +442,13 @@ fun OnboardingScreen(
                                 if (avatarBitmap != null) {
                                     Image(
                                         bitmap = avatarBitmap,
-                                        contentDescription = "AI-generated avatar",
+                                        contentDescription = stringResource(Res.string.view_avatar),
                                         modifier = Modifier.fillMaxSize(),
                                         contentScale = ContentScale.Crop
                                     )
                                 }
                             }
-                            Text("✓ Avatar created!", color = MaterialTheme.colorScheme.primary)
+                            Text(stringResource(Res.string.avatar_generated), color = MaterialTheme.colorScheme.primary)
                         }
                     }
                 }
@@ -466,7 +481,7 @@ fun OnboardingScreen(
                     currentStep -= 1
                 }
             }, enabled = currentStep > 0) {
-                Text("Back")
+                Text(stringResource(Res.string.previous))
             }
 
             val canGoNext = when (currentStep) {
@@ -482,13 +497,13 @@ fun OnboardingScreen(
                     syncFormToViewModel()
                     viewModel.saveIntermediateProgress()
                     currentStep += 1
-                }, enabled = canGoNext) { Text("Next") }
+                }, enabled = canGoNext) { Text(stringResource(Res.string.next)) }
             } else if (currentStep == 3) {
                 Button(onClick = {
                     syncFormToViewModel()
                     viewModel.saveIntermediateProgress()
                     currentStep = 4
-                }, enabled = canGoNext) { Text("Review") }
+                }, enabled = canGoNext) { Text(stringResource(Res.string.review_summary)) }
             } else {
                 Button(
                     onClick = {
@@ -502,7 +517,7 @@ fun OnboardingScreen(
                     if (uiState.isLoading) {
                         CircularProgressIndicator()
                     } else {
-                        Text("Submit")
+                        Text(stringResource(Res.string.finish))
                     }
                 }
             }
@@ -551,6 +566,56 @@ fun OnboardingScreen(
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("Error", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.error)
                     Text(errorMsg, color = MaterialTheme.colorScheme.error)
+                }
+            }
+        }
+        }
+        
+        // Language switcher button - positioned at bottom right
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(16.dp)
+        ) {
+            OutlinedButton(
+                onClick = { showLanguageMenu = true },
+                modifier = Modifier.size(56.dp),
+                shape = CircleShape,
+                contentPadding = PaddingValues(0.dp)
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "🌐",
+                        style = MaterialTheme.typography.headlineLarge
+                    )
+                }
+            }
+            
+            androidx.compose.material3.DropdownMenu(
+                expanded = showLanguageMenu,
+                onDismissRequest = { showLanguageMenu = false }
+            ) {
+                LocalePreference.values().forEach { locale ->
+                    DropdownMenuItem(
+                        text = {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(locale.displayName)
+                                if (locale.localeCode == currentLocale) {
+                                    Text("✓", color = MaterialTheme.colorScheme.primary)
+                                }
+                            }
+                        },
+                        onClick = {
+                            LocaleManager.setLocale(locale.localeCode)
+                            showLanguageMenu = false
+                        }
+                    )
                 }
             }
         }
