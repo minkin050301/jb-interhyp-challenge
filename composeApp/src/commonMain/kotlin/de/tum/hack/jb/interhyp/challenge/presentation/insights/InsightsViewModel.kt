@@ -78,13 +78,25 @@ class InsightsViewModel(
                     .collectLatest { (account, transactions) ->
                         val bankAccount = account
                         
-                        // Calculate monthly statistics from last month transactions
-                        // (where the mock data is located)
-                        val now = currentTimeMillis()
-                        val currentMonthStart = getStartOfMonth(now)
-                        // Calculate start of previous month (subtract ~32 days to get to previous month)
-                        val lastMonthStart = getStartOfMonth(now - 32L * 24 * 60 * 60 * 1000)
-                        val lastMonthEnd = currentMonthStart - 1 // End of last month
+                        // Calculate monthly statistics from the most recent month with transactions
+                        // Find the latest transaction date to determine which month to show
+                        val latestTransactionDate = transactions.maxOfOrNull { it.date }
+                        
+                        val (lastMonthStart, lastMonthEnd) = if (latestTransactionDate != null) {
+                            // Use the month of the latest transaction
+                            val latestMonthStart = getStartOfMonth(latestTransactionDate)
+                            // Calculate end of that month (start of next month - 1)
+                            val nextMonthStart = getStartOfMonth(latestMonthStart + 32L * 24 * 60 * 60 * 1000)
+                            val latestMonthEnd = nextMonthStart - 1
+                            latestMonthStart to latestMonthEnd
+                        } else {
+                            // No transactions yet, use last month from current time
+                            val now = currentTimeMillis()
+                            val currentMonthStart = getStartOfMonth(now)
+                            val lastMonthStart = getStartOfMonth(now - 32L * 24 * 60 * 60 * 1000)
+                            val lastMonthEnd = currentMonthStart - 1
+                            lastMonthStart to lastMonthEnd
+                        }
                         
                         val monthlyIncome = bankAccount?.getTotalIncome(lastMonthStart, lastMonthEnd) ?: 0.0
                         val monthlyExpenses = bankAccount?.getTotalExpenses(lastMonthStart, lastMonthEnd) ?: 0.0

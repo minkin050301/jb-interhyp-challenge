@@ -28,8 +28,10 @@ import de.tum.hack.jb.interhyp.challenge.ui.components.Settings
 import de.tum.hack.jb.interhyp.challenge.ui.insights.InsightsScreen
 import de.tum.hack.jb.interhyp.challenge.ui.settings.SettingsScreen
 import de.tum.hack.jb.interhyp.challenge.ui.profile.ProfileEditScreen
+import de.tum.hack.jb.interhyp.challenge.presentation.dashboard.DashboardViewModel
 import de.tum.hack.jb.interhyp.challenge.presentation.insights.InsightsViewModel
 import de.tum.hack.jb.interhyp.challenge.presentation.theme.ThemeViewModel
+import androidx.compose.runtime.collectAsState
 import org.koin.compose.koinInject
 import androidx.compose.ui.graphics.Color
 import org.jetbrains.compose.resources.painterResource
@@ -118,8 +120,10 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
     // Simple state-based navigation
     var currentScreen by remember { mutableStateOf<String?>("home") }
 
-    // Inject InsightsViewModel
+    // Inject ViewModels
     val insightsViewModel: InsightsViewModel = koinInject()
+    val dashboardViewModel: DashboardViewModel = koinInject()
+    val uiState by dashboardViewModel.uiState.collectAsState()
 
     when (currentScreen) {
         "insights" -> {
