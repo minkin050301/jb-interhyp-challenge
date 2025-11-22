@@ -4,4 +4,8 @@ html, body {
     margin: 0;
     padding: 0;
     overflow: hidden;
+    background: #0F1115; /* match Compose dark background */
+    color: #E6E9EF;      /* base text color for non-Compose content */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
