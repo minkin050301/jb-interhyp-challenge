@@ -2,6 +2,7 @@ package de.tum.hack.jb.interhyp.challenge.ui.onboarding
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -42,10 +43,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.toComposeImageBitmap
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import de.tum.hack.jb.interhyp.challenge.data.network.ImageUtils
+import de.tum.hack.jb.interhyp.challenge.util.getFocusManager
 import de.tum.hack.jb.interhyp.challenge.ui.components.ImagePicker
 import de.tum.hack.jb.interhyp.challenge.ui.components.DatePickerField
 import org.jetbrains.skia.Image as SkiaImage
@@ -191,12 +194,18 @@ fun OnboardingScreen(
     }
 
     val scroll = rememberScrollState()
+    val focusManager = getFocusManager()
 
     Column(
         modifier = Modifier
             .background(MaterialTheme.colorScheme.background)
             .fillMaxSize()
             .verticalScroll(scroll)
+            .pointerInput(focusManager) {
+                detectTapGestures {
+                    focusManager?.clearFocus()
+                }
+            }
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
