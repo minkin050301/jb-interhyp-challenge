@@ -28,7 +28,10 @@ fun App(themeViewModel: ThemeViewModel? = null) {
         if (showMain) {
             MainScreen(themeViewModel = viewModel)
         } else {
-            OnboardingScreen(onSkip = { showMain = true })
+            OnboardingScreen(
+                onSkip = { showMain = true },
+                onComplete = { showMain = true }
+            )
         }
     }
 }
