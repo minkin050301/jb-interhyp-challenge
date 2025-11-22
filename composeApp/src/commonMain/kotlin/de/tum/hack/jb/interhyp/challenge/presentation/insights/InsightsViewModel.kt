@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import de.tum.hack.jb.interhyp.challenge.data.repository.BudgetTrackingRepository
 import de.tum.hack.jb.interhyp.challenge.data.repository.UserRepository
+import de.tum.hack.jb.interhyp.challenge.data.service.BudgetSyncService
 import de.tum.hack.jb.interhyp.challenge.data.service.MonthlyReminderService
 import de.tum.hack.jb.interhyp.challenge.domain.model.BankAccount
 import de.tum.hack.jb.interhyp.challenge.domain.model.Transaction
@@ -32,7 +33,8 @@ data class InsightsUiState(
 class InsightsViewModel(
     private val budgetTrackingRepository: BudgetTrackingRepository,
     private val userRepository: UserRepository,
-    private val monthlyReminderService: MonthlyReminderService
+    private val monthlyReminderService: MonthlyReminderService,
+    private val budgetSyncService: BudgetSyncService
 ) : ViewModel() {
     
     private val _uiState = MutableStateFlow(InsightsUiState())
@@ -62,6 +64,12 @@ class InsightsViewModel(
                     return@launch
                 }
                 
+                // Ensure bank account is initialized (will create mock data if needed)
+                val existingAccount = budgetTrackingRepository.getBankAccount(user.id).first()
+                if (existingAccount == null) {
+                    budgetSyncService.initializeBankAccountFromUser(user)
+                }
+                
                 // Load bank account data and combine with transactions
                 budgetTrackingRepository.getBankAccount(user.id)
                     .combine(budgetTrackingRepository.getTransactions(user.id)) { account, transactions ->
@@ -70,12 +78,16 @@ class InsightsViewModel(
                     .collectLatest { (account, transactions) ->
                         val bankAccount = account
                         
-                        // Calculate monthly statistics from current month transactions
+                        // Calculate monthly statistics from last month transactions
+                        // (where the mock data is located)
                         val now = currentTimeMillis()
-                        val monthStart = getStartOfMonth(now)
+                        val currentMonthStart = getStartOfMonth(now)
+                        // Calculate start of previous month (subtract ~32 days to get to previous month)
+                        val lastMonthStart = getStartOfMonth(now - 32L * 24 * 60 * 60 * 1000)
+                        val lastMonthEnd = currentMonthStart - 1 // End of last month
                         
-                        val monthlyIncome = bankAccount?.getTotalIncome(monthStart, now) ?: 0.0
-                        val monthlyExpenses = bankAccount?.getTotalExpenses(monthStart, now) ?: 0.0
+                        val monthlyIncome = bankAccount?.getTotalIncome(lastMonthStart, lastMonthEnd) ?: 0.0
+                        val monthlyExpenses = bankAccount?.getTotalExpenses(lastMonthStart, lastMonthEnd) ?: 0.0
                         val monthlySavings = monthlyIncome - monthlyExpenses
                         
                         // Get recent transactions (last 20, sorted by date descending)
