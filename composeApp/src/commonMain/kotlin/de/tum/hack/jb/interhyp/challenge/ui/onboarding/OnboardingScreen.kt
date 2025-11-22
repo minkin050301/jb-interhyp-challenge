@@ -13,6 +13,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
@@ -20,6 +21,8 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -28,32 +31,40 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import de.tum.hack.jb.interhyp.challenge.domain.model.PropertyType
+import de.tum.hack.jb.interhyp.challenge.presentation.onboarding.OnboardingViewModel
+import org.koin.compose.koinInject
 
 @Composable
 fun OnboardingScreen(
     onSkip: () -> Unit = {},
+    onComplete: () -> Unit = {},
+    viewModel: OnboardingViewModel = koinInject()
 ) {
-    var submitted by remember { mutableStateOf(false) }
-
+    val uiState by viewModel.uiState.collectAsState()
+    
     // Steps: 0 = Greeting, 1 = Target, 2 = Personal, 3 = Summary
     var currentStep by remember { mutableStateOf(0) }
     val totalSteps = 3 // excluding summary presentation
 
-    // Greeting
+    // Local UI state for form fields (strings for text input)
     var userName by remember { mutableStateOf("") }
-
-    // Target
     var targetType by remember { mutableStateOf("House") } // "House" or "Apartment"
     var sizeSqm by remember { mutableStateOf("") }
     var location by remember { mutableStateOf("") }
-
-    // Personal
     var age by remember { mutableStateOf("") }
     var netIncome by remember { mutableStateOf("") } // monthly
     var currentWealth by remember { mutableStateOf("") }
     var monthlyExpenses by remember { mutableStateOf("") }
     var adults by remember { mutableStateOf("") }
     var children by remember { mutableStateOf("") }
+    
+    // Handle completion
+    LaunchedEffect(uiState.isCompleted) {
+        if (uiState.isCompleted) {
+            onComplete()
+        }
+    }
 
     fun toDoubleSafe(s: String): Double? = s.replace(',', '.').toDoubleOrNull()
     fun toIntSafe(s: String): Int? = s.toIntOrNull()
@@ -185,14 +196,34 @@ fun OnboardingScreen(
             } else if (currentStep == 2) {
                 Button(onClick = { currentStep = 3 }, enabled = canGoNext) { Text("Review") }
             } else {
-                Button(onClick = { submitted = true }, enabled = targetValid && personalValid && greetingValid) {
-                    Text("Submit")
+                Button(
+                    onClick = {
+                        // Update ViewModel with all form data before submitting
+                        viewModel.updateName(userName)
+                        toIntSafe(age)?.let { viewModel.updateAge(it) }
+                        toDoubleSafe(netIncome)?.let { viewModel.updateMonthlyIncome(it) }
+                        toDoubleSafe(monthlyExpenses)?.let { viewModel.updateMonthlyExpenses(it) }
+                        toDoubleSafe(currentWealth)?.let { viewModel.updateCurrentEquity(it) }
+                        viewModel.updateDesiredLocation(location)
+                        toDoubleSafe(sizeSqm)?.let { viewModel.updateDesiredPropertySize(it) }
+                        viewModel.updateDesiredPropertyType(
+                            if (targetType == "House") PropertyType.HOUSE else PropertyType.APARTMENT
+                        )
+                        // Submit to save data
+                        viewModel.submitOnboarding()
+                    },
+                    enabled = targetValid && personalValid && greetingValid && !uiState.isLoading
+                ) {
+                    if (uiState.isLoading) {
+                        CircularProgressIndicator()
+                    } else {
+                        Text("Submit")
+                    }
                 }
             }
 
             Button(onClick = {
                 // reset all
-                submitted = false
                 currentStep = 0
                 userName = ""
                 targetType = "House"
@@ -209,12 +240,13 @@ fun OnboardingScreen(
             }
         }
 
-        if (submitted) {
+        // Show error message if any
+        uiState.errorMessage?.let { errorMsg ->
             Spacer(Modifier.height(8.dp))
             ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("All set!", style = MaterialTheme.typography.titleLarge)
-                    Text("Your setup is complete. You can now proceed with these details.")
+                    Text("Error", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.error)
+                    Text(errorMsg, color = MaterialTheme.colorScheme.error)
                 }
             }
         }

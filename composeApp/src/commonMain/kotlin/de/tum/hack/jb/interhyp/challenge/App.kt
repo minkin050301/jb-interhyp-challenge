@@ -19,7 +19,10 @@ fun App() {
         if (showMain) {
             MainScreen()
         } else {
-            OnboardingScreen(onSkip = { showMain = true })
+            OnboardingScreen(
+                onSkip = { showMain = true },
+                onComplete = { showMain = true }
+            )
         }
     }
 }
