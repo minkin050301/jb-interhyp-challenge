@@ -17,7 +17,9 @@ data class User(
     val image: String? = null,
     val coupons: List<String> = emptyList(),
     val familyMembers: List<Person> = emptyList(),
-    val savedPropertyId: String? = null
+    val savedPropertyId: String? = null,
+    val goalPropertyPrice: Double? = null,
+    val goalPropertySize: Double? = null
 ) {
     /**
      * Calculates the monthly savings capacity

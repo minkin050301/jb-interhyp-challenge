@@ -22,7 +22,9 @@ data class UserProfile(
     val targetDate: String? = null, // When user wants to purchase (e.g., "2026-12")
     val desiredChildren: Int = 0, // Future children planned
     val avatarImage: String? = null, // Base64 encoded image or URL
-    val familyMembers: List<Person> = emptyList()
+    val familyMembers: List<Person> = emptyList(),
+    val goalPropertyPrice: Double? = null,
+    val goalPropertySize: Double? = null
 ) {
     /**
      * Calculate monthly savings capacity
@@ -42,7 +44,9 @@ data class UserProfile(
             netIncome = monthlyIncome,
             expenses = monthlyExpenses,
             wealth = currentEquity,
-            familyMembers = familyMembers
+            familyMembers = familyMembers,
+            goalPropertyPrice = goalPropertyPrice,
+            goalPropertySize = goalPropertySize
         )
     }
 }
