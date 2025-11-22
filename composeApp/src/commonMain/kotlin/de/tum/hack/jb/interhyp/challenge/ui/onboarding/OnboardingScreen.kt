@@ -19,7 +19,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -37,7 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asComposeImageBitmap
+import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -140,11 +140,6 @@ fun OnboardingScreen(
     var selfieBytes by remember { mutableStateOf<ByteArray?>(null) }
     var selfieBase64 by remember { mutableStateOf<String?>(null) }
 
-    // Selfie
-    var selfieStatus by remember { mutableStateOf("") } // "pending", "taken", or "skipped"
-    var selfieData by remember { mutableStateOf<ByteArray?>(null) }
-    var showCamera by remember { mutableStateOf(false) }
-
     fun toDoubleSafe(s: String): Double? = s.replace(',', '.').toDoubleOrNull()
     fun toIntSafe(s: String): Int? = s.toIntOrNull()
 
@@ -186,8 +181,8 @@ fun OnboardingScreen(
                     toIntSafe(children)?.let { it >= 0 } == true
         )
     }
-    val selfieValid by remember(selfieStatus) {
-        mutableStateOf(selfieStatus == "taken" || selfieStatus == "skipped")
+    val selfieValid by remember(selfieBytes) {
+        mutableStateOf(true) // Selfie is always optional
     }
 
     val scroll = rememberScrollState()
@@ -261,7 +256,7 @@ fun OnboardingScreen(
                         NumberField(label = "Current wealth (savings)", value = currentWealth, onValueChange = { currentWealth = it })
                         NumberField(label = "Monthly expenses", value = monthlyExpenses, onValueChange = { monthlyExpenses = it })
                         NumberField(label = "Existing credits (per month) [Optional]", value = existingCredits, onValueChange = { existingCredits = it })
-                        Divider()
+                        HorizontalDivider()
                         SectionTitle("Household composition")
                         NumberField(label = "Adults", value = adults, onValueChange = { adults = it })
                         NumberField(label = "Children", value = children, onValueChange = { children = it })
@@ -288,7 +283,7 @@ fun OnboardingScreen(
                             ) {
                                 val imageBitmap = remember(selfieBytes) {
                                     selfieBytes?.let {
-                                        SkiaImage.makeFromEncoded(it).asComposeImageBitmap()
+                                        SkiaImage.makeFromEncoded(it).toComposeImageBitmap()
                                     }
                                 }
 
@@ -320,6 +315,7 @@ fun OnboardingScreen(
                             onImageSelected = { bytes ->
                                 selfieBytes = bytes
                                 selfieBase64 = bytes?.let { ImageUtils.encodeImageToBase64(it) }
+                                viewModel.updateSelfie(selfieBase64)
                             }
                         ) { pickImage ->
                             if (selfieBytes == null) {
@@ -339,106 +335,6 @@ fun OnboardingScreen(
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                        }
-                    }
-                }
-            }
-            3 -> {
-                ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        SectionTitle("Selfie Verification")
-
-                        if (showCamera) {
-                            // Show camera capture interface
-                            CameraCapture(
-                                onImageCaptured = { imageData ->
-                                    selfieData = imageData
-                                    selfieStatus = "taken"
-                                    showCamera = false
-                                },
-                                onDismiss = {
-                                    showCamera = false
-                                }
-                            )
-                        } else {
-                            // Show instructions and buttons
-                            Text("To verify your identity, we need a selfie photo.")
-                            Text("Please take a selfie or skip this step for now.",
-                                style = MaterialTheme.typography.bodyMedium)
-
-                            Spacer(Modifier.height(8.dp))
-
-                            // Show status
-                            if (selfieStatus == "taken") {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .background(
-                                            MaterialTheme.colorScheme.primaryContainer,
-                                            RoundedCornerShape(8.dp)
-                                        )
-                                        .padding(16.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        "✓ Selfie captured!",
-                                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                        style = MaterialTheme.typography.bodyLarge
-                                    )
-                                    Button(onClick = {
-                                        showCamera = true
-                                    }) {
-                                        Text("Retake")
-                                    }
-                                }
-                            } else if (selfieStatus == "skipped") {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .background(
-                                            MaterialTheme.colorScheme.secondaryContainer,
-                                            RoundedCornerShape(8.dp)
-                                        )
-                                        .padding(16.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        "⊘ Skipped - you can add this later",
-                                        color = MaterialTheme.colorScheme.onSecondaryContainer,
-                                        style = MaterialTheme.typography.bodyMedium
-                                    )
-                                    Button(onClick = {
-                                        selfieStatus = ""
-                                    }) {
-                                        Text("Undo")
-                                    }
-                                }
-                            }
-
-                            // Action buttons (only show if no status yet)
-                            if (selfieStatus.isEmpty()) {
-                                Spacer(Modifier.height(8.dp))
-                                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                    Button(
-                                        onClick = {
-                                            showCamera = true
-                                        },
-                                        modifier = Modifier.weight(1f)
-                                    ) {
-                                        Text("Take Selfie")
-                                    }
-                                    Button(
-                                        onClick = {
-                                            selfieStatus = "skipped"
-                                        },
-                                        modifier = Modifier.weight(1f)
-                                    ) {
-                                        Text("Skip for now")
-                                    }
-                                }
-                            }
                         }
                     }
                 }
@@ -483,20 +379,16 @@ fun OnboardingScreen(
             }
 
             if (currentStep < 3) {
-                Button(onClick = { currentStep += 1 }, enabled = canGoNext) { Text("Next") }
-            } else if (currentStep == 3) {
-                Button(onClick = { currentStep = 4 }, enabled = canGoNext) { Text("Review") }
-            if (currentStep < 2) {
                 Button(onClick = {
                     syncFormToViewModel()
                     viewModel.saveIntermediateProgress()
                     currentStep += 1
                 }, enabled = canGoNext) { Text("Next") }
-            } else if (currentStep == 2) {
+            } else if (currentStep == 3) {
                 Button(onClick = {
                     syncFormToViewModel()
                     viewModel.saveIntermediateProgress()
-                    currentStep = 3
+                    currentStep = 4
                 }, enabled = canGoNext) { Text("Review") }
             } else {
                 Button(
@@ -532,9 +424,8 @@ fun OnboardingScreen(
                 existingCredits = ""
                 adults = ""
                 children = ""
-                selfieStatus = ""
-                selfieData = null
-                showCamera = false
+                selfieBytes = null
+                selfieBase64 = null
             }) {
                 Text("Reset")
             }

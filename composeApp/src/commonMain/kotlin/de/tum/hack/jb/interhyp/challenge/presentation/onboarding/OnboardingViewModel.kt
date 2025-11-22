@@ -113,6 +113,9 @@ class OnboardingViewModel(
      */
     fun updateSelfie(base64Image: String?) {
         _uiState.update { it.copy(selfieBase64 = base64Image) }
+    }
+    
+    /**
      * Update future monthly income
      */
     fun updateFutureMonthlyIncome(income: Double?) {
