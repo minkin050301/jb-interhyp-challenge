@@ -47,16 +47,31 @@ kotlin {
             implementation(libs.koin.android)
             implementation(libs.kotlinx.coroutines.android)
             implementation(libs.sqldelight.android)
+            
+            // DataStore (Android only)
+            implementation(libs.androidx.datastore.preferences)
+            
+            // SQLDelight runtime and coroutines (Android)
+            implementation(libs.sqldelight.runtime)
+            implementation(libs.sqldelight.coroutines)
         }
         
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
             implementation(libs.sqldelight.native)
+            
+            // SQLDelight runtime and coroutines (iOS)
+            implementation(libs.sqldelight.runtime)
+            implementation(libs.sqldelight.coroutines)
         }
         
         jsMain.dependencies {
             implementation(libs.ktor.client.js)
             implementation(libs.sqldelight.js)
+            
+            // SQLDelight runtime and coroutines (JS)
+            implementation(libs.sqldelight.runtime)
+            implementation(libs.sqldelight.coroutines)
         }
         
         commonMain.dependencies {
@@ -91,13 +106,6 @@ kotlin {
             
             // Kotlinx Coroutines
             implementation(libs.kotlinx.coroutines.core)
-            
-            // DataStore
-            implementation(libs.androidx.datastore.preferences)
-            
-            // SQLDelight
-            implementation(libs.sqldelight.runtime)
-            implementation(libs.sqldelight.coroutines)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
