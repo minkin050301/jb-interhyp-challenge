@@ -2,6 +2,7 @@ package de.tum.hack.jb.interhyp.challenge.ui.onboarding
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,6 +29,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
@@ -42,13 +44,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.toComposeImageBitmap
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import de.tum.hack.jb.interhyp.challenge.data.network.ImageUtils
+import de.tum.hack.jb.interhyp.challenge.util.getFocusManager
 import de.tum.hack.jb.interhyp.challenge.ui.components.ImagePicker
 import de.tum.hack.jb.interhyp.challenge.ui.components.DatePickerField
 import org.jetbrains.skia.Image as SkiaImage
+import de.tum.hack.jb.interhyp.challenge.ui.util.byteArrayToImageBitmap
 import de.tum.hack.jb.interhyp.challenge.domain.model.PropertyType
 import de.tum.hack.jb.interhyp.challenge.presentation.onboarding.OnboardingViewModel
 import de.tum.hack.jb.interhyp.challenge.ui.goal.GoalSelectionScreen
@@ -74,13 +79,13 @@ fun OnboardingScreen(
     var targetDate by remember { mutableStateOf("") }
     var age by remember { mutableStateOf("") }
     var netIncome by remember { mutableStateOf("") } // monthly
-    var futureIncome by remember { mutableStateOf("") }
+    var yearlyIncomeIncrease by remember { mutableStateOf(3f) } // percentage 0-7%
     var currentWealth by remember { mutableStateOf("") }
     var monthlyExpenses by remember { mutableStateOf("") }
     var existingCredits by remember { mutableStateOf("") }
-    var adults by remember { mutableStateOf("") }
-    var children by remember { mutableStateOf("") }
-    var desiredChildren by remember { mutableStateOf("") }
+    var adults by remember { mutableStateOf("1") }
+    var children by remember { mutableStateOf("0") }
+    var desiredChildren by remember { mutableStateOf("0") }
 
     // Load saved profile data on initialization
     LaunchedEffect(Unit) {
@@ -98,9 +103,7 @@ fun OnboardingScreen(
         if (uiState.monthlyIncome > 0 && netIncome.isBlank()) {
             netIncome = uiState.monthlyIncome.toString()
         }
-        if (uiState.futureMonthlyIncome != null && futureIncome.isBlank()) {
-            futureIncome = uiState.futureMonthlyIncome.toString()
-        }
+        // yearlyIncomeIncrease is managed by slider with default value
         if (uiState.monthlyExpenses > 0 && monthlyExpenses.isBlank()) {
             monthlyExpenses = uiState.monthlyExpenses.toString()
         }
@@ -154,7 +157,12 @@ fun OnboardingScreen(
         viewModel.updateName(userName)
         toIntSafe(age)?.let { viewModel.updateAge(it) }
         toDoubleSafe(netIncome)?.let { viewModel.updateMonthlyIncome(it) }
-        viewModel.updateFutureMonthlyIncome(toDoubleSafe(futureIncome))
+        // Calculate future monthly income from yearly increase percentage
+        val currentIncome = toDoubleSafe(netIncome)
+        val futureMonthlyIncome = if (currentIncome != null && currentIncome > 0) {
+            currentIncome * (1 + yearlyIncomeIncrease / 100.0)
+        } else null
+        viewModel.updateFutureMonthlyIncome(futureMonthlyIncome)
         toDoubleSafe(monthlyExpenses)?.let { viewModel.updateMonthlyExpenses(it) }
         toDoubleSafe(currentWealth)?.let { viewModel.updateCurrentEquity(it) }
         toDoubleSafe(existingCredits)?.let { viewModel.updateExistingCredits(it) }
@@ -192,12 +200,18 @@ fun OnboardingScreen(
     }
 
     val scroll = rememberScrollState()
+    val focusManager = getFocusManager()
 
     Column(
         modifier = Modifier
             .background(MaterialTheme.colorScheme.background)
             .fillMaxSize()
             .verticalScroll(scroll)
+            .pointerInput(focusManager) {
+                detectTapGestures {
+                    focusManager?.clearFocus()
+                }
+            }
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
@@ -215,7 +229,11 @@ fun OnboardingScreen(
             4 -> "Step 5 of $totalSteps · Selfie Verification"
             else -> "Summary"
         }
-        Text(stepLabel, style = MaterialTheme.typography.titleMedium)
+        Text(
+            stepLabel, 
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onBackground
+        )
 
         when (currentStep) {
             0 -> {
@@ -274,7 +292,27 @@ fun OnboardingScreen(
                         if (userName.isNotBlank()) Text("Hi $userName!")
                         NumberField(label = "Age", value = age, onValueChange = { age = it })
                         NumberField(label = "Net income (per month)", value = netIncome, onValueChange = { netIncome = it })
-                        NumberField(label = "Future income (per month) [Optional]", value = futureIncome, onValueChange = { futureIncome = it })
+                        
+                        // Yearly income increase slider
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            Text(
+                                "Future income (yearly increase) [Optional]",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                            Text(
+                                "${(yearlyIncomeIncrease * 10).toInt() / 10.0}% per year",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Slider(
+                                value = yearlyIncomeIncrease,
+                                onValueChange = { yearlyIncomeIncrease = it },
+                                valueRange = 0f..7f,
+                                steps = 69, // 0.1% increments: (7-0)/0.1 - 1 = 69
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                        
                         NumberField(label = "Current wealth (savings)", value = currentWealth, onValueChange = { currentWealth = it })
                         NumberField(label = "Monthly expenses", value = monthlyExpenses, onValueChange = { monthlyExpenses = it })
                         NumberField(label = "Existing credits (per month) [Optional]", value = existingCredits, onValueChange = { existingCredits = it })
@@ -282,9 +320,24 @@ fun OnboardingScreen(
                         HorizontalDivider()
                         Spacer(Modifier.height(4.dp))
                         SectionTitle("Household composition")
-                        NumberField(label = "Adults", value = adults, onValueChange = { adults = it })
-                        NumberField(label = "Children", value = children, onValueChange = { children = it })
-                        NumberField(label = "Desired future children [Optional]", value = desiredChildren, onValueChange = { desiredChildren = it })
+                        NumberDropdown(
+                            label = "Adults",
+                            value = adults,
+                            onValueChange = { adults = it },
+                            options = listOf(1, 2, 3, 4, 5)
+                        )
+                        NumberDropdown(
+                            label = "Children",
+                            value = children,
+                            onValueChange = { children = it },
+                            options = listOf(0, 1, 2, 3, 4, 5, 6)
+                        )
+                        NumberDropdown(
+                            label = "Desired future children [Optional]",
+                            value = desiredChildren,
+                            onValueChange = { desiredChildren = it },
+                            options = listOf(0, 1, 2, 3, 4)
+                        )
                     }
                 }
             }
@@ -307,7 +360,7 @@ fun OnboardingScreen(
                             ) {
                                 val imageBitmap = remember(selfieBytes) {
                                     selfieBytes?.let {
-                                        SkiaImage.makeFromEncoded(it).toComposeImageBitmap()
+                                        byteArrayToImageBitmap(it)
                                     }
                                 }
 
@@ -340,6 +393,11 @@ fun OnboardingScreen(
                                 selfieBytes = bytes
                                 selfieBase64 = bytes?.let { ImageUtils.encodeImageToBase64(it) }
                                 viewModel.updateSelfie(selfieBase64)
+
+                                // Generate avatar from selfie
+                                selfieBase64?.let { base64 ->
+                                    viewModel.generateAvatar(base64)
+                                }
                             }
                         ) { pickImage ->
                             if (selfieBytes == null) {
@@ -360,6 +418,39 @@ fun OnboardingScreen(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
+
+                        // Display avatar generation status and result
+                        if (uiState.isGeneratingAvatar) {
+                            Spacer(Modifier.height(16.dp))
+                            CircularProgressIndicator()
+                            Text("Generating your avatar...", style = MaterialTheme.typography.bodyMedium)
+                        } else if (uiState.avatarImage != null) {
+                            Spacer(Modifier.height(16.dp))
+                            Text("Your AI-Generated Avatar", style = MaterialTheme.typography.titleMedium)
+                            Spacer(Modifier.height(8.dp))
+                            Box(
+                                modifier = Modifier
+                                    .size(200.dp)
+                                    .clip(RoundedCornerShape(16.dp))
+                            ) {
+                                val avatarBitmap = remember(uiState.avatarImage) {
+                                    uiState.avatarImage?.let {
+                                        val decodedBytes = ImageUtils.decodeBase64ToImage(it)
+                                        byteArrayToImageBitmap(decodedBytes)
+                                    }
+                                }
+
+                                if (avatarBitmap != null) {
+                                    Image(
+                                        bitmap = avatarBitmap,
+                                        contentDescription = "AI-generated avatar",
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                }
+                            }
+                            Text("✓ Avatar created!", color = MaterialTheme.colorScheme.primary)
+                        }
                     }
                 }
             }
@@ -373,7 +464,7 @@ fun OnboardingScreen(
                         Text(
                             "Personal: age ${age.ifBlank { "?" }}, net income ${netIncome.ifBlank { "?" }}, wealth ${currentWealth.ifBlank { "?" }}, expenses ${monthlyExpenses.ifBlank { "?" }}"
                         )
-                        if (futureIncome.isNotBlank()) Text("Future income: $futureIncome")
+                        Text("Yearly income increase: ${(yearlyIncomeIncrease * 10).toInt() / 10.0}%")
                         if (existingCredits.isNotBlank()) Text("Existing credits: $existingCredits")
                         Text("Household: ${adults.ifBlank { "?" }} adults, ${children.ifBlank { "?" }} children")
                         Text("Selfie: ${if (selfieBytes != null) "✓ Added" else "Not added"}")
@@ -452,7 +543,7 @@ fun OnboardingScreen(
                 targetDate = ""
                 age = ""
                 netIncome = ""
-                futureIncome = ""
+                yearlyIncomeIncrease = 3f
                 currentWealth = ""
                 monthlyExpenses = ""
                 existingCredits = ""
@@ -567,9 +658,9 @@ private fun LocationDropdown(
         "Nuremberg",
         "Duisburg"
     )
-    
+
     var expanded by remember { mutableStateOf(false) }
-    
+
     ExposedDropdownMenuBox(
         expanded = expanded,
         onExpandedChange = { expanded = it },
@@ -584,7 +675,7 @@ private fun LocationDropdown(
             colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
             modifier = Modifier.fillMaxWidth().menuAnchor()
         )
-        
+
         ExposedDropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false }
@@ -594,6 +685,49 @@ private fun LocationDropdown(
                     text = { Text(city) },
                     onClick = {
                         onValueChange(city)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun NumberDropdown(
+    label: String,
+    value: String,
+    onValueChange: (String) -> Unit,
+    options: List<Int>,
+    modifier: Modifier = Modifier
+) {
+    var expanded by remember { mutableStateOf(false) }
+    
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = it },
+        modifier = modifier.fillMaxWidth()
+    ) {
+        OutlinedTextField(
+            value = value,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text(label) },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+            modifier = Modifier.fillMaxWidth().menuAnchor()
+        )
+        
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            options.forEach { option ->
+                DropdownMenuItem(
+                    text = { Text(option.toString()) },
+                    onClick = {
+                        onValueChange(option.toString())
                         expanded = false
                     }
                 )

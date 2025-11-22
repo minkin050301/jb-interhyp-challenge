@@ -8,6 +8,8 @@ import de.tum.hack.jb.interhyp.challenge.data.service.BudgetSyncService
 import de.tum.hack.jb.interhyp.challenge.data.service.BudgetSyncServiceImpl
 import de.tum.hack.jb.interhyp.challenge.data.service.MonthlyReminderService
 import de.tum.hack.jb.interhyp.challenge.data.service.MonthlyReminderServiceImpl
+import de.tum.hack.jb.interhyp.challenge.data.service.MonthSimulationService
+import de.tum.hack.jb.interhyp.challenge.data.service.MonthSimulationServiceImpl
 import de.tum.hack.jb.interhyp.challenge.domain.model.VertexAIConfig
 import de.tum.hack.jb.interhyp.challenge.presentation.dashboard.DashboardViewModel
 import de.tum.hack.jb.interhyp.challenge.presentation.goal.GoalSelectionViewModel
@@ -36,13 +38,14 @@ val dataModule = module {
     single<BudgetTrackingRepository> { BudgetTrackingRepositoryImpl() }
     single<MonthlyReminderService> { MonthlyReminderServiceImpl(get()) }
     single<BudgetSyncService> { BudgetSyncServiceImpl(get(), get()) }
+    single<MonthSimulationService> { MonthSimulationServiceImpl(get(), get()) }
 
     // Vertex AI configuration - Update these values with your project details
     single<VertexAIConfig> {
         VertexAIConfig(
             projectId = "hackatum25mun-1100",
-            location = "global",
-            apiKey = "AIzaSyAv1fxkUrfz4uCjlFuxUlJASshw8de6uYY"
+            location = "us-central1",
+            accessToken = "ya29.a0ATi6K2tz1WlgpJU9cqnSKJ3nKWifxCVejzmkFeR_K3nOMAJdfYZ125_L16k5WJWFh31p6CcovU422MLCpVd5U2ujwjisIKGpNhKKs0BPpb1diNUvx_WJsJye4tr2-PJh99K0TdW6y5pQUYAK1GfuhqspeWkKxqnJrN9QXft7o8TEn6c-pppdl0TsX03Fa0kWRMdL4UaNOpPZGwaCgYKARgSARcSFQHGX2MiMW4Ah1zmyWGo2kXAfjaMYg0213"
         )
     }
     
@@ -53,7 +56,7 @@ val dataModule = module {
  * Presentation module providing ViewModels
  */
 val presentationModule = module {
-    factory { OnboardingViewModel(get(), get(), get()) }
+    factory { OnboardingViewModel(get(), get(), get(), get()) }
     factory { DashboardViewModel(get(), get(), get(), get()) }
     factory { ProfileViewModel(get()) }
     factory { InsightsViewModel(get(), get(), get(), get()) }

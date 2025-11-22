@@ -96,7 +96,7 @@ data class UsageMetadata(
  */
 data class VertexAIConfig(
     val projectId: String,
-    val location: String = "global",
+    val location: String = "us-central1",
     val apiKey: String? = null,
     val accessToken: String? = null
 ) {

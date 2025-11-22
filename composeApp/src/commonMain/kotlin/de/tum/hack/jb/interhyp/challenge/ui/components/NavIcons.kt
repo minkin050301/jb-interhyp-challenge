@@ -83,68 +83,47 @@ object NavIcons {
         Canvas(modifier = modifier.size(size)) {
             val canvasSize = this.size.width
             val scale = canvasSize / 24f
-            val centerX = canvasSize / 2f
-            val centerY = canvasSize / 2f
-            val color = tint.takeIf { it != Color.Unspecified } ?: Color.Black
             
-            // Standard gear/cog icon - Apple/Material Design style
-            val outerRadius = 9f * scale
-            val innerRadius = 5.5f * scale
-            val toothLength = 2.5f * scale
-            val toothWidth = 1.5f * scale
-            val numTeeth = 8
-            
+            // Material Design settings gear icon path
             val path = Path().apply {
-                // Draw gear shape with teeth
-                for (i in 0 until numTeeth) {
-                    val angle1 = (i * 360f / numTeeth - 360f / (numTeeth * 2)) * kotlin.math.PI / 180f
-                    val angle2 = (i * 360f / numTeeth) * kotlin.math.PI / 180f
-                    val angle3 = (i * 360f / numTeeth + 360f / (numTeeth * 2)) * kotlin.math.PI / 180f
-                    
-                    // Outer point of tooth
-                    val outerX1 = centerX + (outerRadius + toothLength) * kotlin.math.cos(angle1).toFloat()
-                    val outerY1 = centerY + (outerRadius + toothLength) * kotlin.math.sin(angle1).toFloat()
-                    
-                    // Inner point before tooth
-                    val innerX1 = centerX + outerRadius * kotlin.math.cos(angle1).toFloat()
-                    val innerY1 = centerY + outerRadius * kotlin.math.sin(angle1).toFloat()
-                    
-                    // Outer point at tooth tip
-                    val outerX2 = centerX + (outerRadius + toothLength) * kotlin.math.cos(angle2).toFloat()
-                    val outerY2 = centerY + (outerRadius + toothLength) * kotlin.math.sin(angle2).toFloat()
-                    
-                    // Inner point after tooth
-                    val innerX2 = centerX + outerRadius * kotlin.math.cos(angle3).toFloat()
-                    val innerY2 = centerY + outerRadius * kotlin.math.sin(angle3).toFloat()
-                    
-                    if (i == 0) {
-                        moveTo(outerX1, outerY1)
-                    } else {
-                        lineTo(outerX1, outerY1)
-                    }
-                    lineTo(innerX1, innerY1)
-                    lineTo(outerX2, outerY2)
-                    lineTo(innerX2, innerY2)
-                }
+                // Settings gear with proper cog teeth
+                moveTo(19.14f * scale, 12.94f * scale)
+                cubicTo(19.18f * scale, 12.64f * scale, 19.2f * scale, 12.33f * scale, 19.2f * scale, 12f * scale)
+                cubicTo(19.2f * scale, 11.68f * scale, 19.18f * scale, 11.36f * scale, 19.13f * scale, 11.06f * scale)
+                lineTo(21.16f * scale, 9.48f * scale)
+                lineTo(19.16f * scale, 6.48f * scale)
+                lineTo(16.9f * scale, 7.28f * scale)
+                cubicTo(16.29f * scale, 6.81f * scale, 15.61f * scale, 6.42f * scale, 14.87f * scale, 6.13f * scale)
+                lineTo(14.5f * scale, 3.75f * scale)
+                lineTo(10.5f * scale, 3.75f * scale)
+                lineTo(10.13f * scale, 6.13f * scale)
+                cubicTo(9.39f * scale, 6.42f * scale, 8.71f * scale, 6.81f * scale, 8.1f * scale, 7.28f * scale)
+                lineTo(5.84f * scale, 6.48f * scale)
+                lineTo(3.84f * scale, 9.48f * scale)
+                lineTo(5.87f * scale, 11.06f * scale)
+                cubicTo(5.82f * scale, 11.36f * scale, 5.8f * scale, 11.68f * scale, 5.8f * scale, 12f * scale)
+                cubicTo(5.8f * scale, 12.32f * scale, 5.82f * scale, 12.64f * scale, 5.87f * scale, 12.94f * scale)
+                lineTo(3.84f * scale, 14.52f * scale)
+                lineTo(5.84f * scale, 17.52f * scale)
+                lineTo(8.1f * scale, 16.72f * scale)
+                cubicTo(8.71f * scale, 17.19f * scale, 9.39f * scale, 17.58f * scale, 10.13f * scale, 17.87f * scale)
+                lineTo(10.5f * scale, 20.25f * scale)
+                lineTo(14.5f * scale, 20.25f * scale)
+                lineTo(14.87f * scale, 17.87f * scale)
+                cubicTo(15.61f * scale, 17.58f * scale, 16.29f * scale, 17.19f * scale, 16.9f * scale, 16.72f * scale)
+                lineTo(19.16f * scale, 17.52f * scale)
+                lineTo(21.16f * scale, 14.52f * scale)
+                close()
+                
+                // Center circle hole
+                moveTo(12.5f * scale, 15f * scale)
+                cubicTo(10.84f * scale, 15f * scale, 9.5f * scale, 13.66f * scale, 9.5f * scale, 12f * scale)
+                cubicTo(9.5f * scale, 10.34f * scale, 10.84f * scale, 9f * scale, 12.5f * scale, 9f * scale)
+                cubicTo(14.16f * scale, 9f * scale, 15.5f * scale, 10.34f * scale, 15.5f * scale, 12f * scale)
+                cubicTo(15.5f * scale, 13.66f * scale, 14.16f * scale, 15f * scale, 12.5f * scale, 15f * scale)
                 close()
             }
-            
-            // Draw outer gear
-            drawPath(path, color = color)
-            
-            // Draw inner circle (center hole)
-            drawCircle(
-                color = color,
-                radius = innerRadius,
-                center = Offset(centerX, centerY)
-            )
-            
-            // Draw white center to create the hole effect
-            drawCircle(
-                color = Color.White,
-                radius = innerRadius * 0.7f,
-                center = Offset(centerX, centerY)
-            )
+            drawPath(path, color = tint.takeIf { it != Color.Unspecified } ?: Color.Black)
         }
     }
 }

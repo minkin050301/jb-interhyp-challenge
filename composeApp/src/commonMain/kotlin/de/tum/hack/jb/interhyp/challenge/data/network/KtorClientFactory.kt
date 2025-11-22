@@ -1,6 +1,7 @@
 package de.tum.hack.jb.interhyp.challenge.data.network
 
 import io.ktor.client.*
+import io.ktor.client.plugins.compression.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.logging.*
 import io.ktor.serialization.kotlinx.json.*
@@ -17,6 +18,12 @@ object KtorClientFactory {
      */
     fun create(): HttpClient {
         return HttpClient {
+            // Handle GZIP compression
+            install(ContentEncoding) {
+                gzip()
+                deflate()
+            }
+
             // Content Negotiation for JSON serialization
             install(ContentNegotiation) {
                 json(Json {

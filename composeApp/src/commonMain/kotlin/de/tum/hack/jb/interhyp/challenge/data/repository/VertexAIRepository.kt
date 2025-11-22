@@ -39,7 +39,7 @@ class VertexAIRepositoryImpl(
 ) : VertexAIRepository {
     
     companion object {
-        private const val MODEL_NAME = "gemini-3-pro-image-preview"
+        private const val MODEL_NAME = "gemini-2.5-flash-image"
         private const val API_ENDPOINT = "aiplatform.googleapis.com"
     }
     

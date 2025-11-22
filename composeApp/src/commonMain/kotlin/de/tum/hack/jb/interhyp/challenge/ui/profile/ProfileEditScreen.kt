@@ -15,11 +15,16 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -51,13 +56,13 @@ fun ProfileEditScreen(
     var targetDate by remember { mutableStateOf("") }
     var age by remember { mutableStateOf("") }
     var netIncome by remember { mutableStateOf("") }
-    var futureIncome by remember { mutableStateOf("") }
+    var yearlyIncomeIncrease by remember { mutableStateOf(3f) } // percentage 0-7%
     var currentWealth by remember { mutableStateOf("") }
     var monthlyExpenses by remember { mutableStateOf("") }
     var existingCredits by remember { mutableStateOf("") }
-    var adults by remember { mutableStateOf("") }
-    var children by remember { mutableStateOf("") }
-    var desiredChildren by remember { mutableStateOf("") }
+    var adults by remember { mutableStateOf("1") }
+    var children by remember { mutableStateOf("0") }
+    var desiredChildren by remember { mutableStateOf("0") }
 
     // Load profile data into local state when uiState changes
     LaunchedEffect(uiState.hasExistingProfile) {
@@ -65,7 +70,11 @@ fun ProfileEditScreen(
             userName = uiState.name
             age = uiState.age.toString()
             netIncome = uiState.monthlyIncome.toString()
-            futureIncome = uiState.futureMonthlyIncome?.toString() ?: ""
+            // Calculate yearlyIncomeIncrease from futureMonthlyIncome if available
+            if (uiState.futureMonthlyIncome != null && uiState.monthlyIncome > 0) {
+                val increaseRatio = (uiState.futureMonthlyIncome!! / uiState.monthlyIncome) - 1.0
+                yearlyIncomeIncrease = (increaseRatio * 100).toFloat().coerceIn(0f, 7f)
+            }
             currentWealth = uiState.currentEquity.toString()
             monthlyExpenses = uiState.monthlyExpenses.toString()
             existingCredits = if (uiState.existingCredits > 0) uiState.existingCredits.toString() else ""
@@ -137,7 +146,27 @@ fun ProfileEditScreen(
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 SectionTitle("Financial Information")
                 NumberField(label = "Net income (per month)", value = netIncome, onValueChange = { netIncome = it })
-                NumberField(label = "Future income (per month) [Optional]", value = futureIncome, onValueChange = { futureIncome = it })
+                
+                // Yearly income increase slider
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        "Future income (yearly increase) [Optional]",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Text(
+                        "${(yearlyIncomeIncrease * 10).toInt() / 10.0}% per year",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Slider(
+                        value = yearlyIncomeIncrease,
+                        onValueChange = { yearlyIncomeIncrease = it },
+                        valueRange = 0f..7f,
+                        steps = 69, // 0.1% increments: (7-0)/0.1 - 1 = 69
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+                
                 NumberField(label = "Current wealth (savings)", value = currentWealth, onValueChange = { currentWealth = it })
                 NumberField(label = "Monthly expenses", value = monthlyExpenses, onValueChange = { monthlyExpenses = it })
                 NumberField(label = "Existing credits (per month) [Optional]", value = existingCredits, onValueChange = { existingCredits = it })
@@ -161,7 +190,7 @@ fun ProfileEditScreen(
                     )
                 }
                 NumberField(label = "Size (sqm)", value = sizeSqm, onValueChange = { sizeSqm = it })
-                TextFieldSimple(label = "Location (city/region)", value = location, onValueChange = { location = it })
+                LocationDropdown(value = location, onValueChange = { location = it })
                 DatePickerField(label = "Target date [Optional]", value = targetDate, onValueChange = { targetDate = it })
             }
         }
@@ -170,9 +199,24 @@ fun ProfileEditScreen(
         ElevatedCard(modifier = Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 SectionTitle("Household Composition")
-                NumberField(label = "Adults", value = adults, onValueChange = { adults = it })
-                NumberField(label = "Children", value = children, onValueChange = { children = it })
-                NumberField(label = "Desired future children [Optional]", value = desiredChildren, onValueChange = { desiredChildren = it })
+                NumberDropdown(
+                    label = "Adults",
+                    value = adults,
+                    onValueChange = { adults = it },
+                    options = listOf(1, 2, 3, 4, 5)
+                )
+                NumberDropdown(
+                    label = "Children",
+                    value = children,
+                    onValueChange = { children = it },
+                    options = listOf(0, 1, 2, 3, 4, 5, 6)
+                )
+                NumberDropdown(
+                    label = "Desired future children [Optional]",
+                    value = desiredChildren,
+                    onValueChange = { desiredChildren = it },
+                    options = listOf(0, 1, 2, 3, 4)
+                )
             }
         }
 
@@ -194,7 +238,12 @@ fun ProfileEditScreen(
                     viewModel.updateName(userName)
                     toIntSafe(age)?.let { viewModel.updateAge(it) }
                     toDoubleSafe(netIncome)?.let { viewModel.updateMonthlyIncome(it) }
-                    viewModel.updateFutureMonthlyIncome(toDoubleSafe(futureIncome))
+                    // Calculate future monthly income from yearly increase percentage
+                    val currentIncome = toDoubleSafe(netIncome)
+                    val futureMonthlyIncome = if (currentIncome != null && currentIncome > 0) {
+                        currentIncome * (1 + yearlyIncomeIncrease / 100.0)
+                    } else null
+                    viewModel.updateFutureMonthlyIncome(futureMonthlyIncome)
                     toDoubleSafe(monthlyExpenses)?.let { viewModel.updateMonthlyExpenses(it) }
                     toDoubleSafe(currentWealth)?.let { viewModel.updateCurrentEquity(it) }
                     toDoubleSafe(existingCredits)?.let { viewModel.updateExistingCredits(it) }
@@ -282,5 +331,107 @@ private fun RadioOption(label: String, selected: Boolean, onSelect: () -> Unit) 
     Row(verticalAlignment = Alignment.CenterVertically) {
         RadioButton(selected = selected, onClick = onSelect)
         Text(text = label)
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun LocationDropdown(
+    value: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val cities = listOf(
+        "Munich",
+        "Berlin",
+        "Hamburg",
+        "Cologne",
+        "Frankfurt",
+        "Stuttgart",
+        "Düsseldorf",
+        "Dortmund",
+        "Essen",
+        "Leipzig",
+        "Bremen",
+        "Dresden",
+        "Hanover",
+        "Nuremberg",
+        "Duisburg"
+    )
+    
+    var expanded by remember { mutableStateOf(false) }
+    
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = it },
+        modifier = modifier.fillMaxWidth()
+    ) {
+        OutlinedTextField(
+            value = value,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("Location (city)") },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+            modifier = Modifier.fillMaxWidth().menuAnchor()
+        )
+        
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            cities.forEach { city ->
+                DropdownMenuItem(
+                    text = { Text(city) },
+                    onClick = {
+                        onValueChange(city)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun NumberDropdown(
+    label: String,
+    value: String,
+    onValueChange: (String) -> Unit,
+    options: List<Int>,
+    modifier: Modifier = Modifier
+) {
+    var expanded by remember { mutableStateOf(false) }
+    
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = it },
+        modifier = modifier.fillMaxWidth()
+    ) {
+        OutlinedTextField(
+            value = value,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text(label) },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+            modifier = Modifier.fillMaxWidth().menuAnchor()
+        )
+        
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            options.forEach { option ->
+                DropdownMenuItem(
+                    text = { Text(option.toString()) },
+                    onClick = {
+                        onValueChange(option.toString())
+                        expanded = false
+                    }
+                )
+            }
+        }
     }
 }
