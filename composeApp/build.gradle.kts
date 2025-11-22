@@ -8,7 +8,9 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.kotlinx.serialization)
-    alias(libs.plugins.sqldelight)
+    // SQLDelight plugin removed - not compatible with wasmJs
+    // Re-enable when needed and configure to exclude wasmJs
+    // alias(libs.plugins.sqldelight)
 }
 
 kotlin {
@@ -47,16 +49,27 @@ kotlin {
             implementation(libs.koin.android)
             implementation(libs.kotlinx.coroutines.android)
             implementation(libs.sqldelight.android)
+            
+            // DataStore (Android only)
+            implementation(libs.androidx.datastore.preferences)
+            
+            // SQLDelight runtime and coroutines (Android)
+            implementation(libs.sqldelight.runtime)
+            implementation(libs.sqldelight.coroutines)
         }
         
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
             implementation(libs.sqldelight.native)
+            
+            // SQLDelight runtime and coroutines (iOS)
+            implementation(libs.sqldelight.runtime)
+            implementation(libs.sqldelight.coroutines)
         }
         
         jsMain.dependencies {
             implementation(libs.ktor.client.js)
-            implementation(libs.sqldelight.js)
+            // SQLDelight not included for JS/WASM as it doesn't support wasmJs
         }
         
         commonMain.dependencies {
@@ -91,13 +104,6 @@ kotlin {
             
             // Kotlinx Coroutines
             implementation(libs.kotlinx.coroutines.core)
-            
-            // DataStore
-            implementation(libs.androidx.datastore.preferences)
-            
-            // SQLDelight
-            implementation(libs.sqldelight.runtime)
-            implementation(libs.sqldelight.coroutines)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
