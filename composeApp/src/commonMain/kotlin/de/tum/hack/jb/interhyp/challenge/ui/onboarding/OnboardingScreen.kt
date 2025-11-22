@@ -2,6 +2,7 @@ package de.tum.hack.jb.interhyp.challenge.ui.onboarding
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,6 +20,9 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
@@ -26,6 +30,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -37,11 +42,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.toComposeImageBitmap
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import de.tum.hack.jb.interhyp.challenge.data.network.ImageUtils
+import de.tum.hack.jb.interhyp.challenge.util.getFocusManager
 import de.tum.hack.jb.interhyp.challenge.ui.components.ImagePicker
+import de.tum.hack.jb.interhyp.challenge.ui.components.DatePickerField
+import org.jetbrains.skia.Image as SkiaImage
 import de.tum.hack.jb.interhyp.challenge.ui.util.byteArrayToImageBitmap
 import de.tum.hack.jb.interhyp.challenge.domain.model.PropertyType
 import de.tum.hack.jb.interhyp.challenge.presentation.onboarding.OnboardingViewModel
@@ -185,15 +195,22 @@ fun OnboardingScreen(
     }
 
     val scroll = rememberScrollState()
+    val focusManager = getFocusManager()
 
     Column(
         modifier = Modifier
             .background(MaterialTheme.colorScheme.background)
             .fillMaxSize()
             .verticalScroll(scroll)
+            .pointerInput(focusManager) {
+                detectTapGestures {
+                    focusManager?.clearFocus()
+                }
+            }
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        Spacer(Modifier.height(32.dp))
         Text(
             "Home Savings Setup",
             style = MaterialTheme.typography.headlineMedium,
@@ -239,8 +256,8 @@ fun OnboardingScreen(
                             )
                         }
                         NumberField(label = "Size (sqm)", value = sizeSqm, onValueChange = { sizeSqm = it })
-                        TextFieldSimple(label = "Location (city/region)", value = location, onValueChange = { location = it })
-                        TextFieldSimple(label = "Target date (e.g., 2026-12) [Optional]", value = targetDate, onValueChange = { targetDate = it })
+                        LocationDropdown(value = location, onValueChange = { location = it })
+                        DatePickerField(label = "Target date [Optional]", value = targetDate, onValueChange = { targetDate = it })
                     }
                 }
             }
@@ -255,7 +272,9 @@ fun OnboardingScreen(
                         NumberField(label = "Current wealth (savings)", value = currentWealth, onValueChange = { currentWealth = it })
                         NumberField(label = "Monthly expenses", value = monthlyExpenses, onValueChange = { monthlyExpenses = it })
                         NumberField(label = "Existing credits (per month) [Optional]", value = existingCredits, onValueChange = { existingCredits = it })
+                        Spacer(Modifier.height(8.dp))
                         HorizontalDivider()
+                        Spacer(Modifier.height(4.dp))
                         SectionTitle("Household composition")
                         NumberField(label = "Adults", value = adults, onValueChange = { adults = it })
                         NumberField(label = "Children", value = children, onValueChange = { children = it })
@@ -315,7 +334,7 @@ fun OnboardingScreen(
                                 selfieBytes = bytes
                                 selfieBase64 = bytes?.let { ImageUtils.encodeImageToBase64(it) }
                                 viewModel.updateSelfie(selfieBase64)
-                                
+
                                 // Generate avatar from selfie
                                 selfieBase64?.let { base64 ->
                                     viewModel.generateAvatar(base64)
@@ -340,7 +359,7 @@ fun OnboardingScreen(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
-                        
+
                         // Display avatar generation status and result
                         if (uiState.isGeneratingAvatar) {
                             Spacer(Modifier.height(16.dp))
@@ -361,7 +380,7 @@ fun OnboardingScreen(
                                         byteArrayToImageBitmap(decodedBytes)
                                     }
                                 }
-                                
+
                                 if (avatarBitmap != null) {
                                     Image(
                                         bitmap = avatarBitmap,
@@ -543,5 +562,64 @@ private fun RadioOption(label: String, selected: Boolean, onSelect: () -> Unit) 
     Row(verticalAlignment = Alignment.CenterVertically) {
         RadioButton(selected = selected, onClick = onSelect)
         Text(text = label)
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun LocationDropdown(
+    value: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val cities = listOf(
+        "Munich",
+        "Berlin",
+        "Hamburg",
+        "Cologne",
+        "Frankfurt",
+        "Stuttgart",
+        "Düsseldorf",
+        "Dortmund",
+        "Essen",
+        "Leipzig",
+        "Bremen",
+        "Dresden",
+        "Hanover",
+        "Nuremberg",
+        "Duisburg"
+    )
+
+    var expanded by remember { mutableStateOf(false) }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = it },
+        modifier = modifier.fillMaxWidth()
+    ) {
+        OutlinedTextField(
+            value = value,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("Location (city)") },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+            modifier = Modifier.fillMaxWidth().menuAnchor()
+        )
+
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            cities.forEach { city ->
+                DropdownMenuItem(
+                    text = { Text(city) },
+                    onClick = {
+                        onValueChange(city)
+                        expanded = false
+                    }
+                )
+            }
+        }
     }
 }

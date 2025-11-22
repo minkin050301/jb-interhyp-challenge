@@ -15,11 +15,15 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -33,6 +37,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import de.tum.hack.jb.interhyp.challenge.domain.model.PropertyType
 import de.tum.hack.jb.interhyp.challenge.presentation.profile.ProfileViewModel
+import de.tum.hack.jb.interhyp.challenge.ui.components.DatePickerField
 import org.koin.compose.koinInject
 
 @Composable
@@ -111,6 +116,7 @@ fun ProfileEditScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        Spacer(Modifier.height(32.dp))
         Text(
             "Edit Profile",
             style = MaterialTheme.typography.headlineMedium,
@@ -159,8 +165,8 @@ fun ProfileEditScreen(
                     )
                 }
                 NumberField(label = "Size (sqm)", value = sizeSqm, onValueChange = { sizeSqm = it })
-                TextFieldSimple(label = "Location (city/region)", value = location, onValueChange = { location = it })
-                TextFieldSimple(label = "Target date (e.g., 2026-12) [Optional]", value = targetDate, onValueChange = { targetDate = it })
+                LocationDropdown(value = location, onValueChange = { location = it })
+                DatePickerField(label = "Target date [Optional]", value = targetDate, onValueChange = { targetDate = it })
             }
         }
 
@@ -173,6 +179,8 @@ fun ProfileEditScreen(
                 NumberField(label = "Desired future children [Optional]", value = desiredChildren, onValueChange = { desiredChildren = it })
             }
         }
+
+        Spacer(Modifier.height(8.dp))
 
         // Action buttons
         Row(
@@ -278,5 +286,64 @@ private fun RadioOption(label: String, selected: Boolean, onSelect: () -> Unit) 
     Row(verticalAlignment = Alignment.CenterVertically) {
         RadioButton(selected = selected, onClick = onSelect)
         Text(text = label)
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun LocationDropdown(
+    value: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val cities = listOf(
+        "Munich",
+        "Berlin",
+        "Hamburg",
+        "Cologne",
+        "Frankfurt",
+        "Stuttgart",
+        "Düsseldorf",
+        "Dortmund",
+        "Essen",
+        "Leipzig",
+        "Bremen",
+        "Dresden",
+        "Hanover",
+        "Nuremberg",
+        "Duisburg"
+    )
+    
+    var expanded by remember { mutableStateOf(false) }
+    
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = it },
+        modifier = modifier.fillMaxWidth()
+    ) {
+        OutlinedTextField(
+            value = value,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("Location (city)") },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+            modifier = Modifier.fillMaxWidth().menuAnchor()
+        )
+        
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            cities.forEach { city ->
+                DropdownMenuItem(
+                    text = { Text(city) },
+                    onClick = {
+                        onValueChange(city)
+                        expanded = false
+                    }
+                )
+            }
+        }
     }
 }
