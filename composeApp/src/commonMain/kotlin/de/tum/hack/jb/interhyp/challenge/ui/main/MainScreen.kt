@@ -21,8 +21,12 @@ import de.tum.hack.jb.interhyp.challenge.ui.components.AppScaffold
 import de.tum.hack.jb.interhyp.challenge.ui.components.Insights
 import de.tum.hack.jb.interhyp.challenge.ui.components.NavItem
 import de.tum.hack.jb.interhyp.challenge.ui.components.Settings
+import de.tum.hack.jb.interhyp.challenge.ui.insights.InsightsScreen
 import de.tum.hack.jb.interhyp.challenge.ui.settings.SettingsScreen
+import de.tum.hack.jb.interhyp.challenge.ui.profile.ProfileEditScreen
+import de.tum.hack.jb.interhyp.challenge.presentation.insights.InsightsViewModel
 import de.tum.hack.jb.interhyp.challenge.presentation.theme.ThemeViewModel
+import org.koin.compose.koinInject
 
 @Composable
 fun MainScreen(themeViewModel: ThemeViewModel) {
@@ -32,11 +36,26 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
     // Simple state-based navigation
     var currentScreen by remember { mutableStateOf<String?>("home") }
 
+    // Inject InsightsViewModel
+    val insightsViewModel: InsightsViewModel = koinInject()
+
     when (currentScreen) {
+        "insights" -> {
+            InsightsScreen(
+                viewModel = insightsViewModel,
+                onNavigate = { screenId -> currentScreen = screenId }
+            )
+        }
         "settings" -> {
             SettingsScreen(
                 themeViewModel = themeViewModel,
-                onNavigateBack = { currentScreen = "home" }
+                onNavigate = { screenId -> currentScreen = screenId },
+                onNavigateToProfile = { currentScreen = "profile" }
+            )
+        }
+        "profile" -> {
+            ProfileEditScreen(
+                onBack = { currentScreen = "settings" }
             )
         }
         else -> {
