@@ -14,6 +14,15 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
 /**
+ * Result containing property listings and total count for pagination
+ */
+data class PropertySearchResult(
+    val listings: List<PropertyListingDto>,
+    val total: Int,
+    val isFallback: Boolean = false // Indicates if this is fallback data (calculated from average prices)
+)
+
+/**
  * Repository interface for property-related operations.
  */
 interface PropertyRepository {
@@ -31,12 +40,17 @@ interface PropertyRepository {
     /**
      * Search property listings with location, size, and property type.
      * Filters results by size with ±20% tolerance.
+     * @param offset The offset for pagination (default: 0)
+     * @param limit The maximum number of results to return (default: 10)
+     * @return Flow of NetworkResult containing PropertySearchResult with listings and total count
      */
     suspend fun searchPropertyListings(
         location: String,
         size: Double,
-        propertyType: PropertyType
-    ): Flow<NetworkResult<List<PropertyListingDto>>>
+        propertyType: PropertyType,
+        offset: Int,
+        limit: Int
+    ): Flow<NetworkResult<PropertySearchResult>>
 }
 
 /**
@@ -51,14 +65,17 @@ class PropertyRepositoryImpl(
         
         // Default fallback values per location for apartments (in EUR per sqm)
         // Based on average market prices in German cities (2024)
+        // Sources: realting.com and other real estate market reports
         private val DEFAULT_APARTMENT_PRICES = mapOf(
-            "Munich" to 9500.0,
-            "Muenchen" to 9500.0,
-            "Berlin" to 6500.0,
-            "Hamburg" to 6000.0,
+            "Munich" to 8186.0,
+            "Muenchen" to 8186.0,
+            "München" to 8186.0,
+            "Berlin" to 4857.0,
+            "Hamburg" to 5997.0,
             "Frankfurt" to 7000.0,
             "Cologne" to 5000.0,
             "Koeln" to 5000.0,
+            "Köln" to 5000.0,
             "Stuttgart" to 5500.0,
             "default" to 5000.0
         )
@@ -66,13 +83,15 @@ class PropertyRepositoryImpl(
         // Default fallback values per location for houses (in EUR per sqm)
         // Houses are typically 15-20% more expensive per sqm than apartments
         private val DEFAULT_HOUSE_PRICES = mapOf(
-            "Munich" to 11000.0,
-            "Muenchen" to 11000.0,
-            "Berlin" to 7500.0,
+            "Munich" to 9500.0,
+            "Muenchen" to 9500.0,
+            "München" to 9500.0,
+            "Berlin" to 5700.0,
             "Hamburg" to 7000.0,
             "Frankfurt" to 8000.0,
             "Cologne" to 5800.0,
             "Koeln" to 5800.0,
+            "Köln" to 5800.0,
             "Stuttgart" to 6500.0,
             "default" to 5800.0
         )
@@ -83,13 +102,20 @@ class PropertyRepositoryImpl(
     
     /**
      * Get price per sqm for a location and property type
+     * Handles various city name formats (e.g., "Munich", "Muenchen", "München")
      */
     private fun getPricePerSqm(location: String, propertyType: PropertyType): Double {
         val priceMap = when (propertyType) {
             PropertyType.HOUSE -> DEFAULT_HOUSE_PRICES
             else -> DEFAULT_APARTMENT_PRICES
         }
-        return priceMap[location] ?: priceMap["default"]!!
+        // Try exact match first
+        priceMap[location]?.let { return it }
+        // Try case-insensitive match
+        val locationLower = location.lowercase()
+        priceMap.entries.firstOrNull { it.key.lowercase() == locationLower }?.value?.let { return it }
+        // Fallback to default
+        return priceMap["default"]!!
     }
     
     override suspend fun getPropertyListings(location: String): Flow<NetworkResult<List<PropertyListing>>> = flow {
@@ -368,57 +394,33 @@ class PropertyRepositoryImpl(
     override suspend fun searchPropertyListings(
         location: String,
         size: Double,
-        propertyType: PropertyType
-    ): Flow<NetworkResult<List<PropertyListingDto>>> = flow {
+        propertyType: PropertyType,
+        offset: Int,
+        limit: Int
+    ): Flow<NetworkResult<PropertySearchResult>> = flow {
         emit(NetworkResult.Loading)
         
         try {
-            // Normalize location for German umlauts
+            // Normalize location for German umlauts (ä→ae, ö→oe, ü→ue, ß→ss)
             val normalizedLocation = normalizeGermanUmlauts(location)
             
             // Map property type
             val propertyTypeDto = mapPropertyTypeToDto(propertyType)
             
-            // Get region code for the city
-            val region = getRegionForCity(location)
-            
-            // Build request for ThinkImmo API with updated parameters
-            // Convert English city names to German names with umlauts (e.g., "Munich" -> "München")
-            // API expects "active" as string "True"/"False", not boolean
-            // IMPORTANT: All fields must be explicitly set (no defaults) to ensure they're serialized
-            val germanCityName = convertToGermanCityName(location)
-            
+            // Build request for ThinkImmo API - using same approach as getPropertyListings
             val request = ThinkImmoRequestDto(
                 active = "True", // API expects string, not boolean
                 type = propertyTypeDto,
                 sortBy = SortDirection.DESC,
-                sortKey = SortKey.PUBLISH_DATE, // Sort by publish date
-                from = 0,
-                size = 50, // Get more results to filter from
+                sortKey = SortKey.PRICE_PER_SQM,
+                from = offset,
+                size = limit,
                 geoSearches = GeoSearchDto(
-                    geoSearchQuery = germanCityName, // Use German city name with umlauts (e.g., "München")
-                    geoSearchType = GeoSearchType.TOWN, // Use "town" instead of "city"
-                    region = region // Include full German state name (e.g., "Bayern")
+                    geoSearchQuery = normalizedLocation,
+                    geoSearchType = GeoSearchType.CITY,
+                    region = null
                 )
             )
-            
-            // Debug: Log request details
-            println("DEBUG: PropertyRepository - Request: active=${request.active}, type=${request.type}, location=$location, region=$region")
-            println("DEBUG: PropertyRepository - geoSearchQuery=${request.geoSearches?.geoSearchQuery}, geoSearchType=${request.geoSearches?.geoSearchType}")
-            
-            // Serialize request to JSON for debugging (using same config as Ktor)
-            try {
-                val json = kotlinx.serialization.json.Json { 
-                    prettyPrint = true
-                    isLenient = true
-                    ignoreUnknownKeys = true
-                    encodeDefaults = true // IMPORTANT: Include default values
-                }
-                val requestJson = json.encodeToString(ThinkImmoRequestDto.serializer(), request)
-                println("DEBUG: PropertyRepository - Request JSON: $requestJson")
-            } catch (e: Exception) {
-                println("DEBUG: PropertyRepository - Could not serialize request: ${e.message}")
-            }
             
             // POST request to ThinkImmo API
             val response = httpClient.post(THINKIMMO_API_URL) {
@@ -440,7 +442,7 @@ class PropertyRepositoryImpl(
                     if (apiResponse.results.isEmpty()) {
                         // If API returns empty results, return empty list
                         println("DEBUG: PropertyRepository - API returned empty results (total: ${apiResponse.total})")
-                        emit(NetworkResult.Success(emptyList()))
+                        emit(NetworkResult.Success(PropertySearchResult(emptyList(), apiResponse.total)))
                     } else {
                         println("DEBUG: PropertyRepository - API returned ${apiResponse.results.size} results, processing...")
                         // Map results to PropertyListingDto and filter by size (±20% tolerance)
@@ -472,13 +474,15 @@ class PropertyRepositoryImpl(
                                 println("DEBUG: PropertyRepository - Error mapping result: ${e.message}")
                                 null
                             }
-                        }.take(10) // Limit to 10 listings
+                        }.take(limit) // Limit to requested number of listings
                         
                         println("DEBUG: PropertyRepository - Filtered to ${listings.size} listings (size filter: ${sizeMin.toInt()}-${sizeMax.toInt()} m²)")
                         listings.forEachIndexed { index, listing ->
                             println("DEBUG: Listing $index - ID: ${listing.id}, Title: ${listing.title}, Price: ${listing.buyingPrice}, Size: ${listing.squareMeter}")
                         }
-                        emit(NetworkResult.Success(listings))
+                        // Return listings with total count (note: total is from API, but we're filtering, so actual total may differ)
+                        // For simplicity, we'll use the API total as an approximation
+                        emit(NetworkResult.Success(PropertySearchResult(listings, apiResponse.total)))
                     }
                 } catch (e: Exception) {
                     // CancellationException (including AbortFlowException) is expected when using .first() - don't treat as error
@@ -486,15 +490,28 @@ class PropertyRepositoryImpl(
                         // This is normal - Flow was aborted after first result
                         throw e // Re-throw cancellation exceptions
                     }
-                    // If parsing fails, return error
-                    println("DEBUG: PropertyRepository - Exception parsing response: ${e.message}")
+                    // If parsing fails, use fallback instead of error
+                    println("DEBUG: PropertyRepository - Exception parsing response: ${e.message}, using fallback")
                     println("DEBUG: PropertyRepository - Exception type: ${e::class.simpleName}")
                     e.printStackTrace()
-                    emit(NetworkResult.Error("Failed to parse API response: ${e.message}"))
+                    val fallbackListings = generateFallbackListings(location, size, propertyType)
+                        .take(limit)
+                    emit(NetworkResult.Success(PropertySearchResult(
+                        listings = fallbackListings,
+                        total = fallbackListings.size,
+                        isFallback = true
+                    )))
                 }
             } else {
-                // Return error for non-success status
-                emit(NetworkResult.Error("API returned status ${response.status.value}"))
+                // API returned error status (e.g., 502 Bad Gateway) - use fallback
+                println("DEBUG: PropertyRepository - API returned status ${response.status.value}, using fallback")
+                val fallbackListings = generateFallbackListings(location, size, propertyType)
+                    .take(limit)
+                emit(NetworkResult.Success(PropertySearchResult(
+                    listings = fallbackListings,
+                    total = fallbackListings.size,
+                    isFallback = true
+                )))
             }
         } catch (e: Exception) {
             // CancellationException (including AbortFlowException) is expected when using .first() - don't treat as error
@@ -502,10 +519,16 @@ class PropertyRepositoryImpl(
                 // This is normal - Flow was aborted after first result
                 throw e // Re-throw cancellation exceptions
             }
-            // Return error instead of fallback
-            println("DEBUG: PropertyRepository - Exception in searchPropertyListings: ${e.message}")
+            // API call failed - use fallback instead of error
+            println("DEBUG: PropertyRepository - Exception in searchPropertyListings: ${e.message}, using fallback")
             e.printStackTrace()
-            emit(NetworkResult.Error("Failed to fetch properties: ${e.message}"))
+            val fallbackListings = generateFallbackListings(location, size, propertyType)
+                .take(limit)
+            emit(NetworkResult.Success(PropertySearchResult(
+                listings = fallbackListings,
+                total = fallbackListings.size,
+                isFallback = true
+            )))
         }
     }
 }
