@@ -332,6 +332,20 @@ fun OnboardingScreen(
             }
         }
 
+        // Proceed Later button - save progress and exit onboarding
+        if (currentStep < 3) {
+            Button(
+                onClick = {
+                    syncFormToViewModel()
+                    viewModel.saveIntermediateProgress()
+                    onSkip()
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Proceed Later")
+            }
+        }
+
         // Show error message if any
         uiState.errorMessage?.let { errorMsg ->
             Spacer(Modifier.height(8.dp))
