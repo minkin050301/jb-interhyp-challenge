@@ -37,13 +37,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import de.tum.hack.jb.interhyp.challenge.data.network.ImageUtils
 import de.tum.hack.jb.interhyp.challenge.ui.components.ImagePicker
-import org.jetbrains.skia.Image as SkiaImage
+import de.tum.hack.jb.interhyp.challenge.ui.util.byteArrayToImageBitmap
 import de.tum.hack.jb.interhyp.challenge.domain.model.PropertyType
 import de.tum.hack.jb.interhyp.challenge.presentation.onboarding.OnboardingViewModel
 import org.koin.compose.koinInject
@@ -283,7 +282,7 @@ fun OnboardingScreen(
                             ) {
                                 val imageBitmap = remember(selfieBytes) {
                                     selfieBytes?.let {
-                                        SkiaImage.makeFromEncoded(it).toComposeImageBitmap()
+                                        byteArrayToImageBitmap(it)
                                     }
                                 }
 
@@ -316,6 +315,11 @@ fun OnboardingScreen(
                                 selfieBytes = bytes
                                 selfieBase64 = bytes?.let { ImageUtils.encodeImageToBase64(it) }
                                 viewModel.updateSelfie(selfieBase64)
+                                
+                                // Generate avatar from selfie
+                                selfieBase64?.let { base64 ->
+                                    viewModel.generateAvatar(base64)
+                                }
                             }
                         ) { pickImage ->
                             if (selfieBytes == null) {
@@ -335,6 +339,39 @@ fun OnboardingScreen(
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
+                        }
+                        
+                        // Display avatar generation status and result
+                        if (uiState.isGeneratingAvatar) {
+                            Spacer(Modifier.height(16.dp))
+                            CircularProgressIndicator()
+                            Text("Generating your avatar...", style = MaterialTheme.typography.bodyMedium)
+                        } else if (uiState.avatarImage != null) {
+                            Spacer(Modifier.height(16.dp))
+                            Text("Your AI-Generated Avatar", style = MaterialTheme.typography.titleMedium)
+                            Spacer(Modifier.height(8.dp))
+                            Box(
+                                modifier = Modifier
+                                    .size(200.dp)
+                                    .clip(RoundedCornerShape(16.dp))
+                            ) {
+                                val avatarBitmap = remember(uiState.avatarImage) {
+                                    uiState.avatarImage?.let {
+                                        val decodedBytes = ImageUtils.decodeBase64ToImage(it)
+                                        byteArrayToImageBitmap(decodedBytes)
+                                    }
+                                }
+                                
+                                if (avatarBitmap != null) {
+                                    Image(
+                                        bitmap = avatarBitmap,
+                                        contentDescription = "AI-generated avatar",
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                }
+                            }
+                            Text("✓ Avatar created!", color = MaterialTheme.colorScheme.primary)
                         }
                     }
                 }

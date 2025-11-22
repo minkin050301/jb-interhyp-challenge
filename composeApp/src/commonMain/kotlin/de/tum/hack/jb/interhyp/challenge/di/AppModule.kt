@@ -40,8 +40,8 @@ val dataModule = module {
     single<VertexAIConfig> {
         VertexAIConfig(
             projectId = "hackatum25mun-1100",
-            location = "global",
-            apiKey = "AIzaSyAv1fxkUrfz4uCjlFuxUlJASshw8de6uYY"
+            location = "us-central1",
+            accessToken = "ya29.a0ATi6K2uHUjwiaSNcF6LPC9VkADu9z7uQIpvSjWAdFPwu_2pl9VV4IrC9GKOFlZNT4P_7Az7KwOQQWn3UuCTvbGGLTLZLUPf8nQA8u8YcZNBE6zyt4wogJbjHu01SlX-XQDMy75msFAFFA5vnr_aTuk2pfZz4k8uViiDU8kcL69JHBcDXazfvEfawNADK8cE9dPZtLmwRWnNIZAaCgYKAUUSARcSFQHGX2MiUs7zhTT61pWimE3EGtCiXA0213"
         )
     }
     
@@ -52,7 +52,7 @@ val dataModule = module {
  * Presentation module providing ViewModels
  */
 val presentationModule = module {
-    factory { OnboardingViewModel(get(), get(), get()) }
+    factory { OnboardingViewModel(get(), get(), get(), get()) }
     factory { DashboardViewModel(get(), get(), get()) }
     factory { ProfileViewModel(get()) }
     factory { InsightsViewModel(get(), get(), get()) }

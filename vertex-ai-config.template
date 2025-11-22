@@ -6,15 +6,15 @@
 # Your Google Cloud Project ID
 export VERTEX_AI_PROJECT_ID="your-project-id-here"
 
-# Your Vertex AI API Key (get from Google Cloud Console)
-export VERTEX_AI_API_KEY="your-api-key-here"
-
 # Location/Region (optional, defaults to "global")
 # Options: global, us-central1, europe-west1, asia-southeast1, etc.
 export VERTEX_AI_LOCATION="global"
 
-# Alternative: Use OAuth Access Token instead of API Key
-# export VERTEX_AI_ACCESS_TOKEN="your-oauth-token-here"
+# OAuth Access Token (Bearer Token) - Recommended for production
+export VERTEX_AI_ACCESS_TOKEN="your-bearer-token-here"
+
+# Alternative: Use API Key (less secure, not recommended for production)
+# export VERTEX_AI_API_KEY="your-api-key-here"
 
 # =============================================================================
 # How to get these values:

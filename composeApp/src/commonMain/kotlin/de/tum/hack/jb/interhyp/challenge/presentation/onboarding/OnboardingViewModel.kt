@@ -6,6 +6,7 @@ import de.tum.hack.jb.interhyp.challenge.data.network.NetworkResult
 import de.tum.hack.jb.interhyp.challenge.data.repository.BudgetRepository
 import de.tum.hack.jb.interhyp.challenge.data.repository.PropertyRepository
 import de.tum.hack.jb.interhyp.challenge.data.repository.UserRepository
+import de.tum.hack.jb.interhyp.challenge.data.repository.VertexAIRepository
 import de.tum.hack.jb.interhyp.challenge.domain.model.PropertyType
 import de.tum.hack.jb.interhyp.challenge.domain.model.UserProfile
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -35,6 +36,7 @@ data class OnboardingUiState(
     val numberOfAdults: Int = 1,
     val numberOfChildren: Int = 0,
     val isLoading: Boolean = false,
+    val isGeneratingAvatar: Boolean = false,
     val errorMessage: String? = null,
     val isCompleted: Boolean = false
 )
@@ -46,7 +48,8 @@ data class OnboardingUiState(
 class OnboardingViewModel(
     private val userRepository: UserRepository,
     private val propertyRepository: PropertyRepository,
-    private val budgetRepository: BudgetRepository
+    private val budgetRepository: BudgetRepository,
+    private val vertexAIRepository: VertexAIRepository
 ) : ViewModel() {
     
     private val _uiState = MutableStateFlow(OnboardingUiState())
@@ -162,6 +165,68 @@ class OnboardingViewModel(
      */
     fun updateNumberOfChildren(children: Int) {
         _uiState.update { it.copy(numberOfChildren = children) }
+    }
+    
+    /**
+     * Generate avatar from selfie using Vertex AI
+     */
+    fun generateAvatar(selfieBase64: String) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isGeneratingAvatar = true, errorMessage = null) }
+            
+            try {
+                // Simple prompt for avatar generation
+                val prompt = "Create a stylized cartoon avatar based on this person's photo. Make it friendly and professional."
+                
+                // Call Vertex AI to generate avatar
+                vertexAIRepository.generateImage(
+                    prompt = prompt,
+                    inputImageBase64 = selfieBase64,
+                    mimeType = "image/jpeg",
+                    temperature = 1.0
+                ).collect { result ->
+                    when (result) {
+                        is NetworkResult.Loading -> {
+                            // Keep loading state
+                        }
+                        is NetworkResult.Success -> {
+                            // Get the first generated image
+                            val avatarBase64 = result.data.firstOrNull()?.base64Data
+                            if (avatarBase64 != null) {
+                                _uiState.update { 
+                                    it.copy(
+                                        avatarImage = avatarBase64,
+                                        isGeneratingAvatar = false
+                                    )
+                                }
+                            } else {
+                                _uiState.update { 
+                                    it.copy(
+                                        isGeneratingAvatar = false,
+                                        errorMessage = "No avatar image generated"
+                                    )
+                                }
+                            }
+                        }
+                        is NetworkResult.Error -> {
+                            _uiState.update { 
+                                it.copy(
+                                    isGeneratingAvatar = false,
+                                    errorMessage = "Failed to generate avatar: ${result.message}"
+                                )
+                            }
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                _uiState.update { 
+                    it.copy(
+                        isGeneratingAvatar = false,
+                        errorMessage = "Avatar generation error: ${e.message}"
+                    )
+                }
+            }
+        }
     }
     
     /**
