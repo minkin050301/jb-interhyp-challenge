@@ -19,6 +19,9 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
@@ -26,6 +29,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -242,7 +246,7 @@ fun OnboardingScreen(
                             )
                         }
                         NumberField(label = "Size (sqm)", value = sizeSqm, onValueChange = { sizeSqm = it })
-                        TextFieldSimple(label = "Location (city/region)", value = location, onValueChange = { location = it })
+                        LocationDropdown(value = location, onValueChange = { location = it })
                         DatePickerField(label = "Target date [Optional]", value = targetDate, onValueChange = { targetDate = it })
                     }
                 }
@@ -510,5 +514,64 @@ private fun RadioOption(label: String, selected: Boolean, onSelect: () -> Unit) 
     Row(verticalAlignment = Alignment.CenterVertically) {
         RadioButton(selected = selected, onClick = onSelect)
         Text(text = label)
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun LocationDropdown(
+    value: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val cities = listOf(
+        "Munich",
+        "Berlin",
+        "Hamburg",
+        "Cologne",
+        "Frankfurt",
+        "Stuttgart",
+        "Düsseldorf",
+        "Dortmund",
+        "Essen",
+        "Leipzig",
+        "Bremen",
+        "Dresden",
+        "Hanover",
+        "Nuremberg",
+        "Duisburg"
+    )
+    
+    var expanded by remember { mutableStateOf(false) }
+    
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = it },
+        modifier = modifier.fillMaxWidth()
+    ) {
+        OutlinedTextField(
+            value = value,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("Location (city)") },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+            modifier = Modifier.fillMaxWidth().menuAnchor()
+        )
+        
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            cities.forEach { city ->
+                DropdownMenuItem(
+                    text = { Text(city) },
+                    onClick = {
+                        onValueChange(city)
+                        expanded = false
+                    }
+                )
+            }
+        }
     }
 }
