@@ -33,6 +33,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import de.tum.hack.jb.interhyp.challenge.domain.model.PropertyType
 import de.tum.hack.jb.interhyp.challenge.presentation.profile.ProfileViewModel
+import de.tum.hack.jb.interhyp.challenge.ui.components.DatePickerField
 import org.koin.compose.koinInject
 
 @Composable
@@ -111,6 +112,7 @@ fun ProfileEditScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        Spacer(Modifier.height(32.dp))
         Text(
             "Edit Profile",
             style = MaterialTheme.typography.headlineMedium,
@@ -160,7 +162,7 @@ fun ProfileEditScreen(
                 }
                 NumberField(label = "Size (sqm)", value = sizeSqm, onValueChange = { sizeSqm = it })
                 TextFieldSimple(label = "Location (city/region)", value = location, onValueChange = { location = it })
-                TextFieldSimple(label = "Target date (e.g., 2026-12) [Optional]", value = targetDate, onValueChange = { targetDate = it })
+                DatePickerField(label = "Target date [Optional]", value = targetDate, onValueChange = { targetDate = it })
             }
         }
 
@@ -173,6 +175,8 @@ fun ProfileEditScreen(
                 NumberField(label = "Desired future children [Optional]", value = desiredChildren, onValueChange = { desiredChildren = it })
             }
         }
+
+        Spacer(Modifier.height(8.dp))
 
         // Action buttons
         Row(

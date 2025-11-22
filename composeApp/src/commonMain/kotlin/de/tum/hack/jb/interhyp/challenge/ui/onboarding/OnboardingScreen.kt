@@ -43,6 +43,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import de.tum.hack.jb.interhyp.challenge.data.network.ImageUtils
 import de.tum.hack.jb.interhyp.challenge.ui.components.ImagePicker
+import de.tum.hack.jb.interhyp.challenge.ui.components.DatePickerField
 import org.jetbrains.skia.Image as SkiaImage
 import de.tum.hack.jb.interhyp.challenge.domain.model.PropertyType
 import de.tum.hack.jb.interhyp.challenge.presentation.onboarding.OnboardingViewModel
@@ -195,6 +196,7 @@ fun OnboardingScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        Spacer(Modifier.height(32.dp))
         Text(
             "Home Savings Setup",
             style = MaterialTheme.typography.headlineMedium,
@@ -241,7 +243,7 @@ fun OnboardingScreen(
                         }
                         NumberField(label = "Size (sqm)", value = sizeSqm, onValueChange = { sizeSqm = it })
                         TextFieldSimple(label = "Location (city/region)", value = location, onValueChange = { location = it })
-                        TextFieldSimple(label = "Target date (e.g., 2026-12) [Optional]", value = targetDate, onValueChange = { targetDate = it })
+                        DatePickerField(label = "Target date [Optional]", value = targetDate, onValueChange = { targetDate = it })
                     }
                 }
             }
@@ -256,7 +258,9 @@ fun OnboardingScreen(
                         NumberField(label = "Current wealth (savings)", value = currentWealth, onValueChange = { currentWealth = it })
                         NumberField(label = "Monthly expenses", value = monthlyExpenses, onValueChange = { monthlyExpenses = it })
                         NumberField(label = "Existing credits (per month) [Optional]", value = existingCredits, onValueChange = { existingCredits = it })
+                        Spacer(Modifier.height(8.dp))
                         HorizontalDivider()
+                        Spacer(Modifier.height(4.dp))
                         SectionTitle("Household composition")
                         NumberField(label = "Adults", value = adults, onValueChange = { adults = it })
                         NumberField(label = "Children", value = children, onValueChange = { children = it })
