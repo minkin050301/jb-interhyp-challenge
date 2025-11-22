@@ -41,7 +41,7 @@ val dataModule = module {
         VertexAIConfig(
             projectId = "hackatum25mun-1100",
             location = "us-central1",
-            accessToken = "ya29.a0ATi6K2uHUjwiaSNcF6LPC9VkADu9z7uQIpvSjWAdFPwu_2pl9VV4IrC9GKOFlZNT4P_7Az7KwOQQWn3UuCTvbGGLTLZLUPf8nQA8u8YcZNBE6zyt4wogJbjHu01SlX-XQDMy75msFAFFA5vnr_aTuk2pfZz4k8uViiDU8kcL69JHBcDXazfvEfawNADK8cE9dPZtLmwRWnNIZAaCgYKAUUSARcSFQHGX2MiUs7zhTT61pWimE3EGtCiXA0213"
+            accessToken = "ya29.a0ATi6K2uxR_tkFG7xzDU7OFfZAuKsaH5aOsL-2rJ4-VASFm2vZ-cP0-iuYUCCOWpLOqrLVIOCLM_lpkz0r2w9RVcBf1kOG8k1fHuOqA45heWJm4gQ5Uw_l-kld_usxOwF_0e3tUIKaB6X5avPxiTCugXWgHzGpP5W8Ad_OxJINbJeQHDvppqQWMKIOTEF7EoiXKlBlX0ZTFwUPgaCgYKAXYSARcSFQHGX2Mi45iq3Dwy5IyfoTvjP6D1jw0213"
         )
     }
     
@@ -53,7 +53,7 @@ val dataModule = module {
  */
 val presentationModule = module {
     factory { OnboardingViewModel(get(), get(), get(), get()) }
-    factory { DashboardViewModel(get(), get(), get()) }
+    single { DashboardViewModel(get(), get(), get()) }
     factory { ProfileViewModel(get()) }
     factory { InsightsViewModel(get(), get(), get(), get()) }
     single { ThemeViewModel() }

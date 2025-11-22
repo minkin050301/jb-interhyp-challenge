@@ -27,7 +27,9 @@ data class Part(
     @SerialName("text")
     val text: String? = null,
     @SerialName("inlineData")
-    val inlineData: InlineData? = null
+    val inlineData: InlineData? = null,
+    @SerialName("fileData")
+    val fileData: FileData? = null
 )
 
 @Serializable
@@ -36,6 +38,14 @@ data class InlineData(
     val mimeType: String,
     @SerialName("data")
     val data: String // Base64 encoded image data
+)
+
+@Serializable
+data class FileData(
+    @SerialName("mimeType")
+    val mimeType: String,
+    @SerialName("fileUri")
+    val fileUri: String
 )
 
 @Serializable
@@ -49,7 +59,29 @@ data class GenerationConfig(
     @SerialName("candidateCount")
     val candidateCount: Int? = 1,
     @SerialName("maxOutputTokens")
-    val maxOutputTokens: Int? = null
+    val maxOutputTokens: Int? = null,
+    @SerialName("responseModalities")
+    val responseModalities: List<String>? = null,
+    @SerialName("imageConfig")
+    val imageConfig: ImageConfig? = null
+)
+
+@Serializable
+data class ImageConfig(
+    @SerialName("aspectRatio")
+    val aspectRatio: String? = null,
+    @SerialName("imageSize")
+    val imageSize: String? = null,
+    @SerialName("imageOutputOptions")
+    val imageOutputOptions: ImageOutputOptions? = null,
+    @SerialName("personGeneration")
+    val personGeneration: String? = null
+)
+
+@Serializable
+data class ImageOutputOptions(
+    @SerialName("mimeType")
+    val mimeType: String? = null
 )
 
 /**
@@ -116,3 +148,11 @@ data class GeneratedImage(
     val finishReason: String? = null
 )
 
+/**
+ * Input part for generating content
+ */
+sealed class VertexAIInputPart {
+    data class Text(val text: String) : VertexAIInputPart()
+    data class InlineImage(val base64: String, val mimeType: String) : VertexAIInputPart()
+    data class FileImage(val uri: String, val mimeType: String) : VertexAIInputPart()
+}
