@@ -18,7 +18,7 @@ import de.tum.hack.jb.interhyp.challenge.presentation.theme.ThemeViewModel
 @Composable
 fun SettingsScreen(
     themeViewModel: ThemeViewModel,
-    onNavigateBack: () -> Unit = {},
+    onNavigate: (String) -> Unit = {},
     onNavigateToProfile: () -> Unit = {}
 ) {
     val themePreference by themeViewModel.themePreference.collectAsState()
@@ -28,11 +28,9 @@ fun SettingsScreen(
         navItemsRight = listOf(NavItem(id = "settings", label = "Settings", icon = Settings)),
         selectedItemId = "settings",
         onItemSelected = { id ->
-            if (id != "settings") {
-                onNavigateBack()
-            }
+            onNavigate(id)
         },
-        onHomeClick = onNavigateBack
+        onHomeClick = { onNavigate("home") }
     ) { innerPadding ->
         Column(
             modifier = Modifier

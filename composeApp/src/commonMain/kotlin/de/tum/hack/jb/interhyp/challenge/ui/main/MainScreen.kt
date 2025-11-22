@@ -43,13 +43,13 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
         "insights" -> {
             InsightsScreen(
                 viewModel = insightsViewModel,
-                onNavigateBack = { currentScreen = "home" }
+                onNavigate = { screenId -> currentScreen = screenId }
             )
         }
         "settings" -> {
             SettingsScreen(
                 themeViewModel = themeViewModel,
-                onNavigateBack = { currentScreen = "home" },
+                onNavigate = { screenId -> currentScreen = screenId },
                 onNavigateToProfile = { currentScreen = "profile" }
             )
         }

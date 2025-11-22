@@ -23,7 +23,7 @@ import de.tum.hack.jb.interhyp.challenge.util.formatDate
 @Composable
 fun InsightsScreen(
     viewModel: InsightsViewModel,
-    onNavigateBack: () -> Unit = {}
+    onNavigate: (String) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
     
@@ -32,11 +32,9 @@ fun InsightsScreen(
         navItemsRight = listOf(NavItem(id = "settings", label = "Settings", icon = Settings)),
         selectedItemId = "insights",
         onItemSelected = { id ->
-            if (id != "insights") {
-                onNavigateBack()
-            }
+            onNavigate(id)
         },
-        onHomeClick = onNavigateBack
+        onHomeClick = { onNavigate("home") }
     ) { innerPadding ->
         if (uiState.isLoading) {
             Box(
