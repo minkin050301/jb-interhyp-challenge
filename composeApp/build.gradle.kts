@@ -7,6 +7,8 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
+    alias(libs.plugins.kotlinx.serialization)
+    alias(libs.plugins.sqldelight)
 }
 
 kotlin {
@@ -41,7 +43,22 @@ kotlin {
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
+            implementation(libs.ktor.client.android)
+            implementation(libs.koin.android)
+            implementation(libs.kotlinx.coroutines.android)
+            implementation(libs.sqldelight.android)
         }
+        
+        iosMain.dependencies {
+            implementation(libs.ktor.client.darwin)
+            implementation(libs.sqldelight.native)
+        }
+        
+        jsMain.dependencies {
+            implementation(libs.ktor.client.js)
+            implementation(libs.sqldelight.js)
+        }
+        
         commonMain.dependencies {
             implementation(compose.runtime)
             implementation(compose.foundation)
@@ -51,6 +68,36 @@ kotlin {
             implementation(compose.components.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
+            
+            // Ktor Client
+            implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.content.negotiation)
+            implementation(libs.ktor.serialization.kotlinx.json)
+            implementation(libs.ktor.client.logging)
+            
+            // Koin
+            implementation(libs.koin.core)
+            implementation(libs.koin.compose)
+            implementation(libs.koin.compose.viewmodel)
+            
+            // Voyager
+            implementation(libs.voyager.navigator)
+            implementation(libs.voyager.screenmodel)
+            implementation(libs.voyager.transitions)
+            implementation(libs.voyager.koin)
+            
+            // Kotlinx Serialization
+            implementation(libs.kotlinx.serialization.json)
+            
+            // Kotlinx Coroutines
+            implementation(libs.kotlinx.coroutines.core)
+            
+            // DataStore
+            implementation(libs.androidx.datastore.preferences)
+            
+            // SQLDelight
+            implementation(libs.sqldelight.runtime)
+            implementation(libs.sqldelight.coroutines)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
