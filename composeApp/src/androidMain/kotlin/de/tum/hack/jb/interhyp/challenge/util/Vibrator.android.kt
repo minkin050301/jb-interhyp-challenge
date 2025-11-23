@@ -20,10 +20,11 @@ class AndroidVibrator(private val context: Context) : Vibrator {
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            vibrator.vibrate(VibrationEffect.createOneShot(200, VibrationEffect.DEFAULT_AMPLITUDE))
+            // Heavy vibration: 800ms at maximum amplitude
+            vibrator.vibrate(VibrationEffect.createOneShot(800, 255))
         } else {
             @Suppress("DEPRECATION")
-            vibrator.vibrate(200)
+            vibrator.vibrate(800)
         }
     }
 }
