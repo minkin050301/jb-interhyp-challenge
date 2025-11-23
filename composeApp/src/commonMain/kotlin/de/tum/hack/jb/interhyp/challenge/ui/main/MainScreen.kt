@@ -11,8 +11,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -44,14 +42,7 @@ import org.jetbrains.compose.resources.painterResource
 import jb_interhyp_challenge.composeapp.generated.resources.Res
 import jb_interhyp_challenge.composeapp.generated.resources.house
 import jb_interhyp_challenge.composeapp.generated.resources.neighborhood
-
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.graphicsLayer
-
-import androidx.compose.ui.draw.drawWithContent
-
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.material3.CircularProgressIndicator
 import de.tum.hack.jb.interhyp.challenge.ui.util.byteArrayToImageBitmap
 import de.tum.hack.jb.interhyp.challenge.data.repository.VertexAIRepository
@@ -153,31 +144,19 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
                 onItemSelected = { id ->
                     currentScreen = id
                 },
-                onHomeClick = { currentScreen = "home" }
+                onHomeClick = { currentScreen = "home" },
+                containerColor = Color(0xFFA2C9E8) // Blue background for status bar/dynamic island area
             ) { innerPadding: PaddingValues ->
-                val scrollState = rememberScrollState()
-                Column(
+                Box(
                     modifier = Modifier
-                        .background(MaterialTheme.colorScheme.background)
                         .fillMaxSize()
-                        .padding(innerPadding)
-                        .verticalScroll(scrollState),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                        .background(Color(0xFFA2C9E8)) // Blue background for top and bottom
                 ) {
-                    Text(
-                        "Dashboard", 
-                        style = MaterialTheme.typography.headlineMedium, 
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.padding(horizontal = 16.dp)
-                    )
-                    
-                    val backgroundColor = MaterialTheme.colorScheme.background
+                    // Image at the bottom, aligned with navbar
                     Box(
-                        contentAlignment = Alignment.Center,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(400.dp) // Constrain image height so progress bar is visible
+                            .align(Alignment.BottomCenter),
                     ) {
                         if (uiState.buildingStageImages.allStagesGenerated()) {
                             // Determine which image to show based on house state
@@ -207,21 +186,8 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
                             Image(
                                 painter = painterResource(Res.drawable.neighborhood),
                                 contentDescription = "Neighborhood",
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(400.dp)
-                                    .drawWithContent {
-                                        drawContent()
-                                        drawRect(
-                                            brush = Brush.verticalGradient(
-                                                0f to backgroundColor,
-                                                0.15f to Color.Transparent,
-                                                0.85f to Color.Transparent,
-                                                1f to backgroundColor
-                                            )
-                                        )
-                                    },
-                                contentScale = ContentScale.Crop
+                                modifier = Modifier.fillMaxWidth(),
+                                contentScale = ContentScale.FillWidth
                             )
                             
                             // Show loading indicator while generating
@@ -246,21 +212,15 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
                             }
                         }
                     }
-
-                    // Progress bar showing current balance and down payment goal
+                    
+                    // Progress bar at the top, over the image
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                            .padding(innerPadding)
+                            .padding(horizontal = 16.dp, vertical = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Text(
-                            "Your savings progress", 
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onBackground
-                        )
-                        
                         // Display current balance and target down payment
                         Column(
                             modifier = Modifier.fillMaxWidth(),
@@ -274,12 +234,12 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
                                 Text(
                                     "Current Balance",
                                     style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    color = Color.White
                                 )
                                 Text(
                                     formatCurrency(uiState.currentSavings),
                                     style = MaterialTheme.typography.titleMedium,
-                                    color = MaterialTheme.colorScheme.primary,
+                                    color = Color.White,
                                     fontWeight = FontWeight.Bold
                                 )
                             }
@@ -291,12 +251,12 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
                                 Text(
                                     "Down Payment Goal",
                                     style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    color = Color.White
                                 )
                                 Text(
                                     formatCurrency(uiState.targetSavings),
                                     style = MaterialTheme.typography.titleMedium,
-                                    color = MaterialTheme.colorScheme.onSurface,
+                                    color = Color.White,
                                     fontWeight = FontWeight.Bold
                                 )
                             }
@@ -305,16 +265,28 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
                         // Progress bar
                         LinearProgressIndicator(
                             progress = { uiState.savingsProgress.coerceIn(0f, 1f) }, 
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            color = Color.White,
+                            trackColor = Color.White.copy(alpha = 0.3f)
                         )
                         
                         // Percentage complete
                         Text(
                             "${(uiState.savingsProgress * 100).toInt()}% complete",
                             style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.primary
+                            color = Color.White,
+                            fontWeight = FontWeight.Medium
                         )
                     }
+                    
+                    // Blue background at the bottom (behind the navigation bar area)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(innerPadding.calculateBottomPadding() + 100.dp)
+                            .background(Color(0xFFA2C9E8))
+                            .align(Alignment.BottomCenter)
+                    )
                 }
             }
         }
