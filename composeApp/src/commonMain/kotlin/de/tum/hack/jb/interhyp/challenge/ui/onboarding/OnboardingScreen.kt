@@ -555,7 +555,7 @@ fun OnboardingScreen(
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Proceed Later")
+                Text(stringResource(Res.string.proceed_later))
             }
         }
 

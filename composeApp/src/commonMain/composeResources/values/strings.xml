@@ -80,6 +80,7 @@
     <string name="next">Next</string>
     <string name="previous">Previous</string>
     <string name="finish">Finish</string>
+    <string name="proceed_later">Proceed Later</string>
     
     <!-- Location Options -->
     <string name="select_location">Select location</string>
@@ -139,6 +140,34 @@
     <string name="spending_analysis">Spending Analysis</string>
     <string name="savings_tips">Savings Tips</string>
     <string name="monthly_trend">Monthly Trend</string>
+    <string name="current_balance">Current Balance</string>
+    <string name="last_month_summary">Last Month Summary</string>
+    <string name="income">Income</string>
+    <string name="expenses">Expenses</string>
+    <string name="net_savings">Net Savings</string>
+    <string name="recent_transactions">Recent Transactions</string>
+    <string name="no_transactions_yet">No transactions yet</string>
+    <string name="refresh">Refresh</string>
+    <string name="unknown_error">Unknown error</string>
+    
+    <!-- Transaction Categories -->
+    <!-- Income categories -->
+    <string name="category_salary">Salary</string>
+    <string name="category_bonus">Bonus</string>
+    <string name="category_investment">Investment</string>
+    <string name="category_rental_income">Rental Income</string>
+    <string name="category_other_income">Other Income</string>
+    
+    <!-- Expense categories -->
+    <string name="category_housing">Housing</string>
+    <string name="category_food">Food</string>
+    <string name="category_transportation">Transportation</string>
+    <string name="category_utilities">Utilities</string>
+    <string name="category_entertainment">Entertainment</string>
+    <string name="category_healthcare">Healthcare</string>
+    <string name="category_education">Education</string>
+    <string name="category_shopping">Shopping</string>
+    <string name="category_other_expense">Other Expenses</string>
     
     <!-- Navigation Bar -->
     <string name="nav_home">Home</string>

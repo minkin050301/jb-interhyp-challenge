@@ -26,14 +26,20 @@ fun App(themeViewModel: ThemeViewModel? = null) {
     val themePreference by viewModel.themePreference.collectAsState()
     val currentLocale by LocaleManager.currentLocale.collectAsState()
     
+    // Preserve navigation state across locale changes
+    var showMain by remember { mutableStateOf(false) }
+    var currentScreen by remember { mutableStateOf<String?>("home") }
+    
     // Use key() to force recomposition when locale changes
     key(currentLocale) {
         ProvideAppLocale(locale = currentLocale) {
             AppTheme(themePreference = themePreference) {
-                var showMain by remember { mutableStateOf(false) }
-
                 if (showMain) {
-                    MainScreen(themeViewModel = viewModel)
+                    MainScreen(
+                        themeViewModel = viewModel,
+                        currentScreen = currentScreen,
+                        onScreenChange = { screen -> currentScreen = screen }
+                    )
                 } else {
                     OnboardingScreen(
                         onSkip = { showMain = true },

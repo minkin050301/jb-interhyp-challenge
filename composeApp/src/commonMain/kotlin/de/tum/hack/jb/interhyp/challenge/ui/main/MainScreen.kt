@@ -29,12 +29,13 @@ import de.tum.hack.jb.interhyp.challenge.presentation.theme.ThemeViewModel
 import org.koin.compose.koinInject
 
 @Composable
-fun MainScreen(themeViewModel: ThemeViewModel) {
+fun MainScreen(
+    themeViewModel: ThemeViewModel,
+    currentScreen: String? = "home",
+    onScreenChange: (String?) -> Unit = {}
+) {
     // Placeholder progress; in future wire to persisted user data / ViewModel StateFlow
     val progress = 0.35f
-    
-    // Simple state-based navigation
-    var currentScreen by remember { mutableStateOf<String?>("home") }
 
     // Inject InsightsViewModel
     val insightsViewModel: InsightsViewModel = koinInject()
@@ -43,19 +44,19 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
         "insights" -> {
             InsightsScreen(
                 viewModel = insightsViewModel,
-                onNavigate = { screenId -> currentScreen = screenId }
+                onNavigate = { screenId -> onScreenChange(screenId) }
             )
         }
         "settings" -> {
             SettingsScreen(
                 themeViewModel = themeViewModel,
-                onNavigate = { screenId -> currentScreen = screenId },
-                onNavigateToProfile = { currentScreen = "profile" }
+                onNavigate = { screenId -> onScreenChange(screenId) },
+                onNavigateToProfile = { onScreenChange("profile") }
             )
         }
         "profile" -> {
             ProfileEditScreen(
-                onBack = { currentScreen = "settings" }
+                onBack = { onScreenChange("settings") }
             )
         }
         else -> {
@@ -64,9 +65,9 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
                 navItemsRight = listOf(NavItem(id = "settings", label = "Settings", icon = Settings)),
                 selectedItemId = currentScreen ?: "home",
                 onItemSelected = { id ->
-                    currentScreen = id
+                    onScreenChange(id)
                 },
-                onHomeClick = { currentScreen = "home" }
+                onHomeClick = { onScreenChange("home") }
             ) { innerPadding: PaddingValues ->
                 Column(
                     modifier = Modifier

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Onboarding Screen -->
-    <string name="onboarding_title">Heim-Sparziel einrichten</string>
+    <string name="onboarding_title">Sparziel einrichten</string>
     <string name="step_1_of">Schritt 1 von %1$d</string>
     <string name="step_2_of">Schritt 2 von %1$d</string>
     <string name="step_3_of">Schritt 3 von %1$d</string>
@@ -14,7 +14,7 @@
     
     <!-- Welcome Step -->
     <string name="welcome">Willkommen</string>
-    <string name="welcome_message">Wir freuen uns, Ihnen bei der Planung Ihrer Heim-Ersparnisse zu helfen. Beginnen wir mit Ihrem Namen.</string>
+    <string name="welcome_message">Wir freuen uns, Ihnen bei der Planung Ihrer Ersparnisse zu helfen. Beginnen wir mit Ihrem Namen.</string>
     <string name="your_name">Ihr Name</string>
     <string name="skip_for_now">Vorerst überspringen</string>
     
@@ -80,6 +80,7 @@
     <string name="next">Weiter</string>
     <string name="previous">Zurück</string>
     <string name="finish">Fertig</string>
+    <string name="proceed_later">Später fortfahren</string>
     
     <!-- Location Options -->
     <string name="select_location">Standort auswählen</string>
@@ -139,6 +140,34 @@
     <string name="spending_analysis">Ausgabenanalyse</string>
     <string name="savings_tips">Spartipps</string>
     <string name="monthly_trend">Monatlicher Trend</string>
+    <string name="current_balance">Aktueller Kontostand</string>
+    <string name="last_month_summary">Zusammenfassung vom letzten Monat</string>
+    <string name="income">Einkommen</string>
+    <string name="expenses">Ausgaben</string>
+    <string name="net_savings">Nettoersparnisse</string>
+    <string name="recent_transactions">Letzte Transaktionen</string>
+    <string name="no_transactions_yet">Noch keine Transaktionen</string>
+    <string name="refresh">Aktualisieren</string>
+    <string name="unknown_error">Unbekannter Fehler</string>
+    
+    <!-- Transaction Categories -->
+    <!-- Income categories -->
+    <string name="category_salary">Gehalt</string>
+    <string name="category_bonus">Bonus</string>
+    <string name="category_investment">Investition</string>
+    <string name="category_rental_income">Mieteinnahmen</string>
+    <string name="category_other_income">Sonstige Einnahmen</string>
+    
+    <!-- Expense categories -->
+    <string name="category_housing">Wohnen</string>
+    <string name="category_food">Lebensmittel</string>
+    <string name="category_transportation">Transport</string>
+    <string name="category_utilities">Nebenkosten</string>
+    <string name="category_entertainment">Unterhaltung</string>
+    <string name="category_healthcare">Gesundheit</string>
+    <string name="category_education">Bildung</string>
+    <string name="category_shopping">Einkaufen</string>
+    <string name="category_other_expense">Sonstige Ausgaben</string>
     
     <!-- Navigation Bar -->
     <string name="nav_home">Start</string>
