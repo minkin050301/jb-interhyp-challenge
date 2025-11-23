@@ -5,6 +5,7 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.window.ComposeViewport
 import de.tum.hack.jb.interhyp.challenge.di.appModule
 import de.tum.hack.jb.interhyp.challenge.presentation.theme.ThemeViewModel
+import de.tum.hack.jb.interhyp.challenge.util.LocaleManager
 import org.koin.compose.koinInject
 import org.koin.core.context.startKoin
 
@@ -14,6 +15,11 @@ fun main() {
     startKoin {
         modules(appModule)
     }
+    
+    // Initialize LocaleManager from saved preference
+    // This must happen before ComposeViewport to ensure locale is ready
+    val savedLocale = de.tum.hack.jb.interhyp.challenge.util.getSavedLocale()
+    LocaleManager.initLocale(savedLocale)
     
     ComposeViewport {
         AppWithKoin()

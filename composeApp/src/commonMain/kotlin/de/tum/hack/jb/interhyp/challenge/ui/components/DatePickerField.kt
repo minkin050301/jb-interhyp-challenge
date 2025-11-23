@@ -19,6 +19,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import org.jetbrains.compose.resources.stringResource
+import jb_interhyp_challenge.composeapp.generated.resources.Res
+import jb_interhyp_challenge.composeapp.generated.resources.click_to_select_date
 
 /**
  * A date picker field component that shows a calendar dialog when clicked.
@@ -62,7 +65,7 @@ fun DatePickerField(
             .clickable { showDialog = true }
     ) {
         OutlinedTextField(
-            value = value.ifBlank { "Click to select date" },
+            value = value.ifBlank { stringResource(Res.string.click_to_select_date) },
             onValueChange = { }, // Read-only, changes happen through dialog
             label = { Text(label) },
             placeholder = { Text("YYYY-MM") },

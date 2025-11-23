@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Onboarding Screen -->
+    <string name="onboarding_title">Sparziel einrichten</string>
+    <string name="step_1_of">Schritt 1 von %1$d</string>
+    <string name="step_2_of">Schritt 2 von %1$d</string>
+    <string name="step_3_of">Schritt 3 von %1$d</string>
+    <string name="step_4_of">Schritt 4 von %1$d</string>
+    <string name="step_5_of">Schritt 5 von %1$d</string>
+    <string name="step_welcome">Willkommen</string>
+    <string name="step_your_target">Ihr Ziel</string>
+    <string name="step_goal_selection">Wählen Sie Ihr Traumhaus</string>
+    <string name="step_about_you">Über Sie</string>
+    <string name="step_selfie_verification">Selfie-Verifizierung</string>
+    <string name="summary">Zusammenfassung</string>
+    
+    <!-- Welcome Step -->
+    <string name="welcome">Willkommen</string>
+    <string name="welcome_message">Wir freuen uns, Ihnen bei der Planung Ihrer Ersparnisse zu helfen. Beginnen wir mit Ihrem Namen.</string>
+    <string name="your_name">Ihr Name</string>
+    <string name="skip_for_now">Vorerst überspringen</string>
+    
+    <!-- Target Step -->
+    <string name="your_target">Ihr Ziel</string>
+    <string name="house">Haus</string>
+    <string name="apartment">Wohnung</string>
+    <string name="size_sqm">Größe (qm)</string>
+    <string name="location_city">Standort (Stadt)</string>
+    <string name="click_to_select_date">Datum auswählen</string>
+    <string name="target_date_optional">Zieldatum [Optional]</string>
+    
+    <!-- About You Step -->
+    <string name="about_you">Über Sie</string>
+    <string name="hi_user">Hallo %1$s!</string>
+    <string name="age">Alter</string>
+    <string name="net_income_per_month">Nettoeinkommen (pro Monat)</string>
+    <string name="future_income_optional">Einkommenssteigerung pro Jahr [Optional]</string>
+    <string name="per_year">%s% pro Jahr</string>
+    <string name="current_wealth_savings">Aktuelles Vermögen (Ersparnisse)</string>
+    <string name="monthly_expenses">Monatliche Ausgaben</string>
+    <string name="existing_credits_optional">Bestehende Kredite (pro Monat) [Optional]</string>
+    <string name="household_composition">Haushaltszusammensetzung</string>
+    <string name="adults">Erwachsene</string>
+    <string name="children">Kinder</string>
+    <string name="desired_future_children_optional">Gewünschte zukünftige Kinder [Optional]</string>
+    
+    <!-- Selfie Step -->
+    <string name="your_selfie">Ihr Selfie</string>
+    <string name="selfie_message">Machen Sie ein schnelles Selfie, um Ihr Profil zu personalisieren!</string>
+    <string name="your_selfie_desc">Ihr Selfie</string>
+    <string name="selfie_captured">✓ Selfie aufgenommen!</string>
+    <string name="no_photo_yet">Noch kein Foto</string>
+    <string name="take_selfie_choose_photo">Selfie aufnehmen / Foto auswählen</string>
+    <string name="change_photo">Foto ändern</string>
+    <string name="skip_selfie_message">Sie können diesen Schritt auch überspringen und später hinzufügen</string>
+    <string name="generating_avatar">Ihr Avatar wird erstellt...</string>
+    <string name="avatar_generated">✓ Avatar erstellt!</string>
+    <string name="avatar_generation_failed">Avatar-Erstellung fehlgeschlagen. Sie können es später von Ihrem Profil aus erneut versuchen.</string>
+    <string name="view_avatar">Avatar ansehen</string>
+    
+    <!-- Summary Step -->
+    <string name="review_summary">Überprüfen &amp; Bestätigen</string>
+    <string name="summary_message">Bitte überprüfen Sie Ihre Angaben, bevor wir Ihren Sparplan berechnen.</string>
+    <string name="personal_info">Persönliche Informationen</string>
+    <string name="name_label">Name:</string>
+    <string name="age_label">Alter:</string>
+    <string name="target_property">Zielimmobilie</string>
+    <string name="type_label">Typ:</string>
+    <string name="size_label">Größe:</string>
+    <string name="location_label">Standort:</string>
+    <string name="sqm">qm</string>
+    <string name="financial_info">Finanzinformationen</string>
+    <string name="net_income_label">Nettoeinkommen:</string>
+    <string name="per_month">/ Monat</string>
+    <string name="yearly_increase_label">Jährliche Steigerung:</string>
+    <string name="current_wealth_label">Aktuelles Vermögen:</string>
+    <string name="monthly_expenses_label">Monatliche Ausgaben:</string>
+    <string name="existing_credits_label">Bestehende Kredite:</string>
+    <string name="household_label">Haushalt:</string>
+    <string name="adults_label">Erwachsene</string>
+    <string name="children_label">Kinder</string>
+    
+    <!-- Navigation Buttons -->
+    <string name="next">Weiter</string>
+    <string name="previous">Zurück</string>
+    <string name="finish">Fertig</string>
+    <string name="proceed_later">Später fortfahren</string>
+    
+    <!-- Location Options -->
+    <string name="select_location">Standort auswählen</string>
+    <string name="location_munich">München</string>
+    <string name="location_berlin">Berlin</string>
+    <string name="location_hamburg">Hamburg</string>
+    <string name="location_cologne">Köln</string>
+    <string name="location_frankfurt">Frankfurt</string>
+    <string name="location_stuttgart">Stuttgart</string>
+    <string name="location_dusseldorf">Düsseldorf</string>
+    <string name="location_dortmund">Dortmund</string>
+    <string name="location_essen">Essen</string>
+    <string name="location_leipzig">Leipzig</string>
+    <string name="location_bremen">Bremen</string>
+    <string name="location_dresden">Dresden</string>
+    <string name="location_hannover">Hannover</string>
+    <string name="location_nuremberg">Nürnberg</string>
+    
+    <!-- Dashboard -->
+    <string name="dashboard_title">Dashboard</string>
+    <string name="savings_progress">Sparfortschritt</string>
+    <string name="your_dream_home">Ihr Traumhaus</string>
+    <string name="target_price">Zielpreis:</string>
+    <string name="current_savings">Aktuelle Ersparnisse:</string>
+    <string name="monthly_savings_goal">Monatliches Sparziel:</string>
+    <string name="time_to_goal">Zeit bis zum Ziel:</string>
+    <string name="months">Monate</string>
+    <string name="progress_percentage">%d%% abgeschlossen</string>
+    
+    <!-- House Stages -->
+    <string name="house_stage_foundation">Fundament</string>
+    <string name="house_stage_walls">Wände</string>
+    <string name="house_stage_roof">Dach</string>
+    <string name="house_stage_complete">Fertig</string>
+    
+    <!-- Profile -->
+    <string name="profile_title">Profil</string>
+    <string name="edit_profile">Profil bearbeiten</string>
+    <string name="edit_profile_information">Profilinformationen bearbeiten</string>
+    <string name="property_target">Immobilienziel</string>
+    <string name="save_changes">Speichern</string>
+    <string name="cancel">Abbrechen</string>
+    
+    <!-- Settings -->
+    <string name="settings_title">Einstellungen</string>
+    <string name="theme">Design</string>
+    <string name="theme_light">Hell</string>
+    <string name="theme_dark">Dunkel</string>
+    <string name="theme_system">System</string>
+    <string name="language">Sprache</string>
+    <string name="notifications">Benachrichtigungen</string>
+    <string name="about">Über</string>
+    <string name="version">Version</string>
+    
+    <!-- Insights -->
+    <string name="insights_title">Einblicke</string>
+    <string name="spending_analysis">Ausgabenanalyse</string>
+    <string name="savings_tips">Spartipps</string>
+    <string name="monthly_trend">Monatlicher Trend</string>
+    <string name="current_balance">Aktueller Kontostand</string>
+    <string name="last_month_summary">Zusammenfassung vom letzten Monat</string>
+    <string name="income">Einkommen</string>
+    <string name="expenses">Ausgaben</string>
+    <string name="net_savings">Nettoersparnisse</string>
+    <string name="recent_transactions">Letzte Transaktionen</string>
+    <string name="no_transactions_yet">Noch keine Transaktionen</string>
+    <string name="refresh">Aktualisieren</string>
+    <string name="unknown_error">Unbekannter Fehler</string>
+    
+    <!-- Transaction Categories -->
+    <!-- Income categories -->
+    <string name="category_salary">Gehalt</string>
+    <string name="category_bonus">Bonus</string>
+    <string name="category_investment">Investition</string>
+    <string name="category_rental_income">Mieteinnahmen</string>
+    <string name="category_other_income">Sonstige Einnahmen</string>
+    
+    <!-- Expense categories -->
+    <string name="category_housing">Wohnen</string>
+    <string name="category_food">Lebensmittel</string>
+    <string name="category_transportation">Transport</string>
+    <string name="category_utilities">Nebenkosten</string>
+    <string name="category_entertainment">Unterhaltung</string>
+    <string name="category_healthcare">Gesundheit</string>
+    <string name="category_education">Bildung</string>
+    <string name="category_shopping">Einkaufen</string>
+    <string name="category_other_expense">Sonstige Ausgaben</string>
+    
+    <!-- Navigation Bar -->
+    <string name="nav_home">Start</string>
+    <string name="nav_insights">Einblicke</string>
+    <string name="nav_profile">Profil</string>
+    <string name="nav_settings">Einstellungen</string>
+    
+    <!-- Common -->
+    <string name="loading">Lädt...</string>
+    <string name="error">Fehler</string>
+    <string name="retry">Erneut versuchen</string>
+    <string name="ok">OK</string>
+    <string name="yes">Ja</string>
+    <string name="no">Nein</string>
+    <string name="save">Speichern</string>
+    <string name="delete">Löschen</string>
+    <string name="edit">Bearbeiten</string>
+    <string name="close">Schließen</string>
+    
+    <!-- Errors -->
+    <string name="error_required_field">Dieses Feld ist erforderlich</string>
+    <string name="error_invalid_input">Ungültige Eingabe</string>
+    <string name="error_network">Netzwerkfehler. Bitte versuchen Sie es erneut.</string>
+    <string name="error_unknown">Ein unbekannter Fehler ist aufgetreten</string>
+</resources>

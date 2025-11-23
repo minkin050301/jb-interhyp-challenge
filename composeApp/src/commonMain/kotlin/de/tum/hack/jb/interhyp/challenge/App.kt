@@ -7,11 +7,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.key
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import de.tum.hack.jb.interhyp.challenge.ui.theme.AppTheme
 import de.tum.hack.jb.interhyp.challenge.ui.main.MainScreen
 import de.tum.hack.jb.interhyp.challenge.ui.onboarding.OnboardingScreen
 import de.tum.hack.jb.interhyp.challenge.presentation.theme.ThemeViewModel
+import de.tum.hack.jb.interhyp.challenge.util.LocaleManager
+import de.tum.hack.jb.interhyp.challenge.util.ProvideAppLocale
 import de.tum.hack.jb.interhyp.challenge.presentation.dashboard.DashboardViewModel
 import de.tum.hack.jb.interhyp.challenge.data.repository.VertexAIRepository
 import org.koin.compose.koinInject
@@ -38,12 +41,16 @@ fun App(themeViewModel: ThemeViewModel? = null) {
     val scope = rememberCoroutineScope()
     
     val themePreference by viewModel.themePreference.collectAsState()
+    val currentLocale by LocaleManager.currentLocale.collectAsState()
     
     // Pre-inject dependencies but don't collect state yet to avoid blocking
     val dashboardViewModel: DashboardViewModel = koinInject()
     val vertexAIRepository: VertexAIRepository = koinInject()
     val userRepository: UserRepository = koinInject()
     val httpClient: HttpClient = koinInject()
+    
+    // Preserve navigation state across locale changes
+    var showMain by remember { mutableStateOf(false) }
     
     // Start background image loading and generation (fire and forget, non-blocking)
     LaunchedEffect(Unit) {
@@ -81,48 +88,53 @@ fun App(themeViewModel: ThemeViewModel? = null) {
         }
     }
     
-    AppTheme(themePreference = themePreference) {
-        var showMain by remember { mutableStateOf(false) }
-
-        if (showMain) {
-            MainScreen(themeViewModel = viewModel)
-        } else {
-            OnboardingScreen(
-                onSkip = { showMain = true },
-                onComplete = { 
-                    // Re-generate with new house selection before showing main screen
-                    scope.launch {
-                        try {
-                            val neighborhoodBytes = withContext(Dispatchers.Default) {
-                                Res.readBytes("drawable/neighborhood.png")
-                            }
-                            val user = userRepository.getUser().first()
-                            val houseUrl = user?.goalPropertyImageUrl
-                            
-                            val houseBytes = if (houseUrl != null) {
+    // Use key() to force recomposition when locale changes
+    key(currentLocale) {
+        ProvideAppLocale(locale = currentLocale) {
+            AppTheme(themePreference = themePreference) {
+                if (showMain) {
+                    MainScreen(
+                        themeViewModel = viewModel
+                    )
+                } else {
+                    OnboardingScreen(
+                        onSkip = { showMain = true },
+                        onComplete = { 
+                            // Re-generate with new house selection before showing main screen
+                            scope.launch {
                                 try {
-                                    withContext(Dispatchers.Default) {
-                                        httpClient.get(houseUrl).body<ByteArray>()
+                                    val neighborhoodBytes = withContext(Dispatchers.Default) {
+                                        Res.readBytes("drawable/neighborhood.png")
                                     }
-                                } catch (e: Exception) {
-                                    withContext(Dispatchers.Default) {
-                                        Res.readBytes("drawable/house.png")
+                                    val user = userRepository.getUser().first()
+                                    val houseUrl = user?.goalPropertyImageUrl
+                                    
+                                    val houseBytes = if (houseUrl != null) {
+                                        try {
+                                            withContext(Dispatchers.Default) {
+                                                httpClient.get(houseUrl).body<ByteArray>()
+                                            }
+                                        } catch (e: Exception) {
+                                            withContext(Dispatchers.Default) {
+                                                Res.readBytes("drawable/house.png")
+                                            }
+                                        }
+                                    } else {
+                                        withContext(Dispatchers.Default) {
+                                            Res.readBytes("drawable/house.png")
+                                        }
                                     }
+                                    
+                                    dashboardViewModel.generateCompositeImage(vertexAIRepository, neighborhoodBytes, houseBytes)
+                                } catch(e: Exception) {
+                                    println("Error refreshing house image: ${e.message}")
                                 }
-                            } else {
-                                withContext(Dispatchers.Default) {
-                                    Res.readBytes("drawable/house.png")
-                                }
+                                showMain = true 
                             }
-                            
-                            dashboardViewModel.generateCompositeImage(vertexAIRepository, neighborhoodBytes, houseBytes)
-                        } catch(e: Exception) {
-                            println("Error refreshing house image: ${e.message}")
                         }
-                        showMain = true 
-                    }
+                    )
                 }
-            )
+            }
         }
     }
 }

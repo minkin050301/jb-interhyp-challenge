@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.sp
 import de.tum.hack.jb.interhyp.challenge.domain.model.PropertyListingDto
 import de.tum.hack.jb.interhyp.challenge.domain.model.PropertyType
 import de.tum.hack.jb.interhyp.challenge.presentation.goal.GoalSelectionViewModel
+import de.tum.hack.jb.interhyp.challenge.ui.util.byteArrayToImageBitmap
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
@@ -244,7 +245,7 @@ private fun PropertyListingCard(
 
                 // Yield to allow UI updates before heavy decoding
                 yield()
-                
+
                 imageBitmap = byteArrayToImageBitmap(imageBytes)
                 imageLoadingError = null
             } catch (e: Exception) {

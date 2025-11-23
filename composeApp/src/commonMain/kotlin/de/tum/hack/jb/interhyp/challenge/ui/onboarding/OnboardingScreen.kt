@@ -3,27 +3,32 @@ package de.tum.hack.jb.interhyp.challenge.ui.onboarding
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -33,13 +38,23 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import de.tum.hack.jb.interhyp.challenge.util.getFocusManager
 import de.tum.hack.jb.interhyp.challenge.domain.model.PropertyType
 import de.tum.hack.jb.interhyp.challenge.presentation.onboarding.OnboardingViewModel
+import de.tum.hack.jb.interhyp.challenge.ui.components.DatePickerField
+import de.tum.hack.jb.interhyp.challenge.ui.components.ImagePicker
 import de.tum.hack.jb.interhyp.challenge.ui.goal.GoalSelectionScreen
+import de.tum.hack.jb.interhyp.challenge.ui.locale.LocalePreference
+import de.tum.hack.jb.interhyp.challenge.ui.util.byteArrayToImageBitmap
+import de.tum.hack.jb.interhyp.challenge.util.LocaleManager
+import de.tum.hack.jb.interhyp.challenge.util.getFocusManager
+import jb_interhyp_challenge.composeapp.generated.resources.Res
+import jb_interhyp_challenge.composeapp.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 
 @Composable
@@ -142,32 +157,41 @@ fun OnboardingScreen(
 
     val scroll = rememberScrollState()
     val focusManager = getFocusManager()
+    
+    // Language switcher state
+    var showLanguageMenu by remember { mutableStateOf(false) }
+    val currentLocale by LocaleManager.currentLocale.collectAsState()
 
-    Column(
+    Box(
         modifier = Modifier
             .background(MaterialTheme.colorScheme.background)
             .fillMaxSize()
-            .verticalScroll(scroll)
-            .pointerInput(focusManager) {
-                detectTapGestures {
-                    focusManager?.clearFocus()
-                }
-            }
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(scroll)
+                .pointerInput(focusManager) {
+                    detectTapGestures {
+                        focusManager?.clearFocus()
+                    }
+                }
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
         Spacer(Modifier.height(32.dp))
+        
         Text(
-            "Home Savings Setup",
+            stringResource(Res.string.onboarding_title),
             style = MaterialTheme.typography.headlineMedium,
             color = MaterialTheme.colorScheme.primary
         )
         val stepLabel = when (currentStep) {
-            0 -> "Step 1 of $totalSteps · Welcome"
-            1 -> "Step 2 of $totalSteps · Your Target"
-            2 -> "Step 3 of $totalSteps · Select Your Dream Home"
-            3 -> "Step 4 of $totalSteps · About You"
-            else -> "Summary"
+            0 -> "${stringResource(Res.string.step_1_of, totalSteps)} · ${stringResource(Res.string.step_welcome)}"
+            1 -> "${stringResource(Res.string.step_2_of, totalSteps)} · ${stringResource(Res.string.step_your_target)}"
+            2 -> "${stringResource(Res.string.step_3_of, totalSteps)} · ${stringResource(Res.string.step_goal_selection)}"
+            3 -> "${stringResource(Res.string.step_4_of, totalSteps)} · ${stringResource(Res.string.step_about_you)}"
+            else -> stringResource(Res.string.summary)
         }
         Text(
             stepLabel, 
@@ -179,12 +203,12 @@ fun OnboardingScreen(
             0 -> {
                 ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        SectionTitle("Welcome")
-                        Text("We're excited to help you plan your home savings. Let's start with your name.")
-                        TextFieldSimple(label = "Your name", value = userName, onValueChange = { userName = it })
+                        SectionTitle(stringResource(Res.string.welcome))
+                        Text(stringResource(Res.string.welcome_message))
+                        TextFieldSimple(label = stringResource(Res.string.your_name), value = userName, onValueChange = { userName = it })
                         // Optional: Allow skipping onboarding to jump straight to main dashboard
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                            Button(onClick = onSkip) { Text("Skip for now") }
+                            Button(onClick = onSkip) { Text(stringResource(Res.string.skip_for_now)) }
                         }
                     }
                 }
@@ -192,20 +216,20 @@ fun OnboardingScreen(
             1 -> {
                 ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        SectionTitle("Your Target")
+                        SectionTitle(stringResource(Res.string.your_target))
                         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                             RadioOption(
-                                label = "House",
+                                label = stringResource(Res.string.house),
                                 selected = targetType == "House",
                                 onSelect = { targetType = "House" }
                             )
                             RadioOption(
-                                label = "Apartment",
+                                label = stringResource(Res.string.apartment),
                                 selected = targetType == "Apartment",
                                 onSelect = { targetType = "Apartment" }
                             )
                         }
-                        NumberField(label = "Size (sqm)", value = sizeSqm, onValueChange = { sizeSqm = it })
+                        NumberField(label = stringResource(Res.string.size_sqm), value = sizeSqm, onValueChange = { sizeSqm = it })
                         LocationDropdown(value = location, onValueChange = { location = it })
                     }
                 }
@@ -228,13 +252,13 @@ fun OnboardingScreen(
             3 -> {
                 ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        SectionTitle("About You")
-                        if (userName.isNotBlank()) Text("Hi $userName!")
-                        NumberField(label = "Age", value = age, onValueChange = { age = it })
-                        NumberField(label = "Net income (per month)", value = netIncome, onValueChange = { netIncome = it })
+                        SectionTitle(stringResource(Res.string.about_you))
+                        if (userName.isNotBlank()) Text(stringResource(Res.string.hi_user, userName))
+                        NumberField(label = stringResource(Res.string.age), value = age, onValueChange = { age = it })
+                        NumberField(label = stringResource(Res.string.net_income_per_month), value = netIncome, onValueChange = { netIncome = it })
                         
-                        NumberField(label = "Current wealth (savings)", value = currentWealth, onValueChange = { currentWealth = it })
-                        NumberField(label = "Monthly expenses", value = monthlyExpenses, onValueChange = { monthlyExpenses = it })
+                        NumberField(label = stringResource(Res.string.current_wealth_savings), value = currentWealth, onValueChange = { currentWealth = it })
+                        NumberField(label = stringResource(Res.string.monthly_expenses), value = monthlyExpenses, onValueChange = { monthlyExpenses = it })
                     }
                 }
             }
@@ -260,7 +284,7 @@ fun OnboardingScreen(
                     currentStep -= 1
                 }
             }, enabled = currentStep > 0) {
-                Text("Back")
+                Text(stringResource(Res.string.previous))
             }
 
             val canGoNext = when (currentStep) {
@@ -276,7 +300,7 @@ fun OnboardingScreen(
                     syncFormToViewModel()
                     viewModel.saveIntermediateProgress()
                     currentStep += 1
-                }, enabled = canGoNext) { Text("Next") }
+                }, enabled = canGoNext) { Text(stringResource(Res.string.next)) }
             } else if (currentStep == 2) {
                 // Goal selection handles its own continue button
                 // No button needed here
@@ -285,7 +309,7 @@ fun OnboardingScreen(
                     syncFormToViewModel()
                     viewModel.saveIntermediateProgress()
                     currentStep = 4 // Move to summary
-                }, enabled = canGoNext) { Text("Review") }
+                }, enabled = canGoNext) { Text(stringResource(Res.string.review_summary)) }
             } else {
                 Button(
                     onClick = {
@@ -299,7 +323,7 @@ fun OnboardingScreen(
                     if (uiState.isLoading) {
                         CircularProgressIndicator()
                     } else {
-                        Text("Submit")
+                        Text(stringResource(Res.string.finish))
                     }
                 }
             }
@@ -330,7 +354,7 @@ fun OnboardingScreen(
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Proceed Later")
+                Text(stringResource(Res.string.proceed_later))
             }
         }
 
@@ -341,6 +365,56 @@ fun OnboardingScreen(
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("Error", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.error)
                     Text(errorMsg, color = MaterialTheme.colorScheme.error)
+                }
+            }
+        }
+        }
+        
+        // Language switcher button - positioned at bottom right
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(16.dp)
+        ) {
+            OutlinedButton(
+                onClick = { showLanguageMenu = true },
+                modifier = Modifier.size(56.dp),
+                shape = CircleShape,
+                contentPadding = PaddingValues(0.dp)
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "🌐",
+                        style = MaterialTheme.typography.headlineLarge
+                    )
+                }
+            }
+            
+            androidx.compose.material3.DropdownMenu(
+                expanded = showLanguageMenu,
+                onDismissRequest = { showLanguageMenu = false }
+            ) {
+                LocalePreference.values().forEach { locale ->
+                    DropdownMenuItem(
+                        text = {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(locale.displayName)
+                                if (locale.localeCode == currentLocale) {
+                                    Text("✓", color = MaterialTheme.colorScheme.primary)
+                                }
+                            }
+                        },
+                        onClick = {
+                            LocaleManager.setLocale(locale.localeCode)
+                            showLanguageMenu = false
+                        }
+                    )
                 }
             }
         }
@@ -434,7 +508,7 @@ private fun LocationDropdown(
             value = value,
             onValueChange = {},
             readOnly = true,
-            label = { Text("Location (city)") },
+            label = { Text(stringResource(Res.string.location_city)) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
             colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
             modifier = Modifier.fillMaxWidth().menuAnchor()

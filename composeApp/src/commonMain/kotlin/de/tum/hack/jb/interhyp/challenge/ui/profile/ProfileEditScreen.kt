@@ -14,17 +14,15 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -38,6 +36,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import de.tum.hack.jb.interhyp.challenge.domain.model.PropertyType
 import de.tum.hack.jb.interhyp.challenge.presentation.profile.ProfileViewModel
+import jb_interhyp_challenge.composeapp.generated.resources.Res
+import jb_interhyp_challenge.composeapp.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 
 @Composable
@@ -104,7 +105,7 @@ fun ProfileEditScreen(
     ) {
         Spacer(Modifier.height(32.dp))
         Text(
-            "Edit Profile",
+            stringResource(Res.string.edit_profile),
             style = MaterialTheme.typography.headlineMedium,
             color = MaterialTheme.colorScheme.primary
         )
@@ -116,40 +117,40 @@ fun ProfileEditScreen(
         // Personal Information
         ElevatedCard(modifier = Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                SectionTitle("Personal Information")
-                TextFieldSimple(label = "Your name", value = userName, onValueChange = { userName = it })
-                NumberField(label = "Age", value = age, onValueChange = { age = it })
+                SectionTitle(stringResource(Res.string.personal_info))
+                TextFieldSimple(label = stringResource(Res.string.your_name), value = userName, onValueChange = { userName = it })
+                NumberField(label = stringResource(Res.string.age), value = age, onValueChange = { age = it })
             }
         }
 
         // Financial Information
         ElevatedCard(modifier = Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                SectionTitle("Financial Information")
-                NumberField(label = "Net income (per month)", value = netIncome, onValueChange = { netIncome = it })
+                SectionTitle(stringResource(Res.string.financial_info))
+                NumberField(label = stringResource(Res.string.net_income_per_month), value = netIncome, onValueChange = { netIncome = it })
                 
-                NumberField(label = "Current wealth (savings)", value = currentWealth, onValueChange = { currentWealth = it })
-                NumberField(label = "Monthly expenses", value = monthlyExpenses, onValueChange = { monthlyExpenses = it })
+                NumberField(label = stringResource(Res.string.current_wealth_savings), value = currentWealth, onValueChange = { currentWealth = it })
+                NumberField(label = stringResource(Res.string.monthly_expenses), value = monthlyExpenses, onValueChange = { monthlyExpenses = it })
             }
         }
 
         // Property Target
         ElevatedCard(modifier = Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                SectionTitle("Property Target")
+                SectionTitle(stringResource(Res.string.property_target))
                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                     RadioOption(
-                        label = "House",
+                        label = stringResource(Res.string.house),
                         selected = targetType == "House",
                         onSelect = { targetType = "House" }
                     )
                     RadioOption(
-                        label = "Apartment",
+                        label = stringResource(Res.string.apartment),
                         selected = targetType == "Apartment",
                         onSelect = { targetType = "Apartment" }
                     )
                 }
-                NumberField(label = "Size (sqm)", value = sizeSqm, onValueChange = { sizeSqm = it })
+                NumberField(label = stringResource(Res.string.size_sqm), value = sizeSqm, onValueChange = { sizeSqm = it })
                 LocationDropdown(value = location, onValueChange = { location = it })
             }
         }
@@ -163,7 +164,7 @@ fun ProfileEditScreen(
             modifier = Modifier.fillMaxWidth()
         ) {
             Button(onClick = onBack, modifier = Modifier.weight(1f)) {
-                Text("Cancel")
+                Text(stringResource(Res.string.cancel))
             }
 
             Button(
@@ -188,7 +189,7 @@ fun ProfileEditScreen(
                 if (uiState.isLoading) {
                     CircularProgressIndicator()
                 } else {
-                    Text("Save Changes")
+                    Text(stringResource(Res.string.save_changes))
                 }
             }
         }
@@ -198,7 +199,7 @@ fun ProfileEditScreen(
             Spacer(Modifier.height(8.dp))
             ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Error", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(Res.string.error), style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.error)
                     Text(errorMsg, color = MaterialTheme.colorScheme.error)
                 }
             }
@@ -293,7 +294,7 @@ private fun LocationDropdown(
             value = value,
             onValueChange = {},
             readOnly = true,
-            label = { Text("Location (city)") },
+            label = { Text(stringResource(Res.string.location_city)) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
             colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
             modifier = Modifier.fillMaxWidth().menuAnchor()
