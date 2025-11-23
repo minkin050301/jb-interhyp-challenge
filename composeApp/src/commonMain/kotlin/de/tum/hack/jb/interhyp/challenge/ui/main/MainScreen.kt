@@ -110,7 +110,7 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
             }
         }
     }
-    
+
     // Load resources for stage image generation
     var neighborhoodBytes by remember { mutableStateOf<ByteArray?>(null) }
     var houseBytes by remember { mutableStateOf<ByteArray?>(null) }
@@ -119,7 +119,7 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
     LaunchedEffect(Unit) {
         neighborhoodBytes = Res.readBytes("drawable/neighborhood.png")
         pitBytes = Res.readBytes("drawable/pit.mp4")
-        
+
         // Get user's house image if available
         val user = userRepository.getUser().first()
         val houseUrl = user?.goalPropertyImageUrl
@@ -213,7 +213,7 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
                                 settingsClickCount = 1
                             }
                             lastSettingsClickTime = now
-                            
+
                             if (settingsClickCount >= 5) {
                                 showEasterEgg = true
                                 settingsClickCount = 0
@@ -263,10 +263,8 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
                                     Image(
                                         bitmap = bitmap,
                                         contentDescription = "Construction Stage: ${uiState.houseState}",
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .height(400.dp),
-                                        contentScale = ContentScale.Crop
+                                        modifier = Modifier.fillMaxWidth(),
+                                        contentScale = ContentScale.FillWidth
                                     )
                                 }
                             }
@@ -278,10 +276,10 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
                                     modifier = Modifier.fillMaxWidth(),
                                     contentScale = ContentScale.FillWidth
                                 )
-                                
+
                                 // Show loading indicator while generating
                                 // Only show if we are not in NEIGHBORHOOD state or if we are genuinely generating
-                                if (!uiState.buildingStageImages.allStagesGenerated() && 
+                                if (!uiState.buildingStageImages.allStagesGenerated() &&
                                     (uiState.isGeneratingImage || uiState.isGeneratingStageImage || uiState.generatedHouseImage != null)) {
                                     Column(
                                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -303,7 +301,7 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
                                 }
                             }
                         }
-                        
+
                         // Progress bar at the top, over the image
                         val density = LocalDensity.current
                         Column(
@@ -326,7 +324,7 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
                                     color = Color.White,
                                     fontWeight = FontWeight.Medium
                                 )
-                                
+
                                 // Balance / Goal on the right
                                 Text(
                                     "${formatToThousands(uiState.currentSavings)} / ${formatToThousands(uiState.targetSavings)}",
@@ -335,7 +333,7 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
                                     fontWeight = FontWeight.Medium
                                 )
                             }
-                            
+
                             // Custom progress bar with checkpoints
                             Box(
                                 modifier = Modifier
@@ -348,7 +346,7 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
                                     val cornerRadius = 7.dp.toPx()
                                     val trackTop = (size.height - trackHeight) / 2
                                     val trackBottom = trackTop + trackHeight
-                                    
+
                                     // Draw track (background) with rounded corners
                                     drawRoundRect(
                                         color = Color.White.copy(alpha = 0.25f),
@@ -356,7 +354,7 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
                                         size = androidx.compose.ui.geometry.Size(size.width, trackHeight),
                                         cornerRadius = androidx.compose.ui.geometry.CornerRadius(cornerRadius, cornerRadius)
                                     )
-                                    
+
                                     // Draw filled progress with rounded corners
                                     val progress = uiState.savingsProgress.coerceIn(0f, 1f)
                                     val progressWidth = size.width * progress
@@ -368,7 +366,7 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
                                             cornerRadius = androidx.compose.ui.geometry.CornerRadius(cornerRadius, cornerRadius)
                                         )
                                     }
-                                    
+
                                     // Draw checkpoint lines at 20%, 40%, 60%, 80%
                                     val checkpoints = listOf(0.2f, 0.4f, 0.6f, 0.8f)
                                     checkpoints.forEach { checkpoint ->
@@ -383,7 +381,7 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
                                     }
                                 }
                             }
-                            
+
                             // Annotations below progress bar
                             BoxWithConstraints(
                                 modifier = Modifier.fillMaxWidth().height(20.dp)
@@ -421,7 +419,7 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
                     modifier = Modifier.fillMaxSize(),
                     videoBytes = videoBytes!!
                 )
-                
+
                 IconButton(
                     onClick = { showEasterEgg = false },
                     modifier = Modifier
