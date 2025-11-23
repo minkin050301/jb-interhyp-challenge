@@ -22,21 +22,12 @@ data class OnboardingUiState(
     val name: String = "",
     val age: Int = 25,
     val monthlyIncome: Double = 0.0,
-    val futureMonthlyIncome: Double? = null,
     val monthlyExpenses: Double = 0.0,
     val currentEquity: Double = 0.0,
-    val existingCredits: Double = 0.0,
     val desiredLocation: String = "Munich",
     val desiredPropertySize: Double = 80.0,
     val desiredPropertyType: PropertyType = PropertyType.APARTMENT,
-    val selfieBase64: String? = null,
-    val targetDate: String? = null,
-    val desiredChildren: Int = 0,
-    val avatarImage: String? = null,
-    val numberOfAdults: Int = 1,
-    val numberOfChildren: Int = 0,
     val isLoading: Boolean = false,
-    val isGeneratingAvatar: Boolean = false,
     val errorMessage: String? = null,
     val isCompleted: Boolean = false,
     val goalPropertyImageUrl: String? = null
@@ -113,128 +104,10 @@ class OnboardingViewModel(
     }
     
     /**
-     * Update selfie image (Base64 encoded)
-     */
-    fun updateSelfie(base64Image: String?) {
-        _uiState.update { it.copy(selfieBase64 = base64Image) }
-    }
-    
-    /**
-     * Update future monthly income
-     */
-    fun updateFutureMonthlyIncome(income: Double?) {
-        _uiState.update { it.copy(futureMonthlyIncome = income) }
-    }
-    
-    /**
-     * Update existing credits
-     */
-    fun updateExistingCredits(credits: Double) {
-        _uiState.update { it.copy(existingCredits = credits) }
-    }
-    
-    /**
-     * Update target date
-     */
-    fun updateTargetDate(date: String?) {
-        _uiState.update { it.copy(targetDate = date) }
-    }
-    
-    /**
-     * Update desired children
-     */
-    fun updateDesiredChildren(children: Int) {
-        _uiState.update { it.copy(desiredChildren = children) }
-    }
-    
-    /**
-     * Update avatar image
-     */
-    fun updateAvatarImage(image: String?) {
-        _uiState.update { it.copy(avatarImage = image) }
-    }
-    
-    /**
-     * Update number of adults
-     */
-    fun updateNumberOfAdults(adults: Int) {
-        _uiState.update { it.copy(numberOfAdults = adults) }
-    }
-    
-    /**
-     * Update number of children
-     */
-    fun updateNumberOfChildren(children: Int) {
-        _uiState.update { it.copy(numberOfChildren = children) }
-    }
-    
-    /**
      * Update goal property image URL
      */
     fun updateGoalPropertyImage(url: String?) {
         _uiState.update { it.copy(goalPropertyImageUrl = url) }
-    }
-    
-    /**
-     * Generate avatar from selfie using Vertex AI
-     */
-    fun generateAvatar(selfieBase64: String) {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isGeneratingAvatar = true, errorMessage = null) }
-            
-            try {
-                // Simple prompt for avatar generation
-                val prompt = "Create a stylized cartoon avatar based on this person's photo. Make it friendly and professional."
-                
-                // Call Vertex AI to generate avatar
-                vertexAIRepository.generateImage(
-                    prompt = prompt,
-                    inputImageBase64 = selfieBase64,
-                    mimeType = "image/jpeg",
-                    temperature = 1.0
-                ).collect { result ->
-                    when (result) {
-                        is NetworkResult.Loading -> {
-                            // Keep loading state
-                        }
-                        is NetworkResult.Success -> {
-                            // Get the first generated image
-                            val avatarBase64 = result.data.firstOrNull()?.base64Data
-                            if (avatarBase64 != null) {
-                                _uiState.update { 
-                                    it.copy(
-                                        avatarImage = avatarBase64,
-                                        isGeneratingAvatar = false
-                                    )
-                                }
-                            } else {
-                                _uiState.update { 
-                                    it.copy(
-                                        isGeneratingAvatar = false,
-                                        errorMessage = "No avatar image generated"
-                                    )
-                                }
-                            }
-                        }
-                        is NetworkResult.Error -> {
-                            _uiState.update { 
-                                it.copy(
-                                    isGeneratingAvatar = false,
-                                    errorMessage = "Failed to generate avatar: ${result.message}"
-                                )
-                            }
-                        }
-                    }
-                }
-            } catch (e: Exception) {
-                _uiState.update { 
-                    it.copy(
-                        isGeneratingAvatar = false,
-                        errorMessage = "Avatar generation error: ${e.message}"
-                    )
-                }
-            }
-        }
     }
     
     /**
@@ -251,16 +124,11 @@ class OnboardingViewModel(
                     name = state.name,
                     age = state.age,
                     monthlyIncome = state.monthlyIncome,
-                    futureMonthlyIncome = state.futureMonthlyIncome,
                     monthlyExpenses = state.monthlyExpenses,
                     currentEquity = state.currentEquity,
-                    existingCredits = state.existingCredits,
                     desiredLocation = state.desiredLocation,
                     desiredPropertySize = state.desiredPropertySize,
                     desiredPropertyType = state.desiredPropertyType,
-                    targetDate = state.targetDate,
-                    desiredChildren = state.desiredChildren,
-                    avatarImage = state.avatarImage,
                     goalPropertyImageUrl = state.goalPropertyImageUrl
                 )
                 
@@ -286,19 +154,12 @@ class OnboardingViewModel(
                                 name = it.name,
                                 age = it.age,
                                 monthlyIncome = it.monthlyIncome,
-                                futureMonthlyIncome = it.futureMonthlyIncome,
                                 monthlyExpenses = it.monthlyExpenses,
                                 currentEquity = it.currentEquity,
-                                existingCredits = it.existingCredits,
                                 desiredLocation = it.desiredLocation,
                                 desiredPropertySize = it.desiredPropertySize,
                                 desiredPropertyType = it.desiredPropertyType,
-                                targetDate = it.targetDate,
-                                desiredChildren = it.desiredChildren,
-                                avatarImage = it.avatarImage,
-                                goalPropertyImageUrl = it.goalPropertyImageUrl,
-                                numberOfAdults = it.familyMembers.count { member -> member.age >= 18 }.coerceAtLeast(1),
-                                numberOfChildren = it.familyMembers.count { member -> member.age < 18 }
+                                goalPropertyImageUrl = it.goalPropertyImageUrl
                             )
                         }
                     }
@@ -336,21 +197,16 @@ class OnboardingViewModel(
                     name = state.name,
                     age = state.age,
                     monthlyIncome = state.monthlyIncome,
-                    futureMonthlyIncome = state.futureMonthlyIncome,
                     monthlyExpenses = state.monthlyExpenses,
                     currentEquity = state.currentEquity,
-                    existingCredits = state.existingCredits,
                     desiredLocation = state.desiredLocation,
                     desiredPropertySize = state.desiredPropertySize,
                     desiredPropertyType = state.desiredPropertyType,
-                    targetDate = state.targetDate,
-                    desiredChildren = state.desiredChildren,
-                    avatarImage = state.avatarImage,
                     goalPropertyImageUrl = state.goalPropertyImageUrl
                 )
                 
-                // Save user with selfie
-                val user = userProfile.toUser().copy(image = state.selfieBase64)
+                // Save user
+                val user = userProfile.toUser()
                 userRepository.saveUser(user)
                 
                 _uiState.update { it.copy(isLoading = false, isCompleted = true) }

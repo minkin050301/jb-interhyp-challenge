@@ -18,18 +18,11 @@ data class ProfileUiState(
     val name: String = "",
     val age: Int = 25,
     val monthlyIncome: Double = 0.0,
-    val futureMonthlyIncome: Double? = null,
     val monthlyExpenses: Double = 0.0,
     val currentEquity: Double = 0.0,
-    val existingCredits: Double = 0.0,
     val desiredLocation: String = "Munich",
     val desiredPropertySize: Double = 80.0,
     val desiredPropertyType: PropertyType = PropertyType.APARTMENT,
-    val targetDate: String? = null,
-    val desiredChildren: Int = 0,
-    val avatarImage: String? = null,
-    val numberOfAdults: Int = 1,
-    val numberOfChildren: Int = 0,
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
     val isSaved: Boolean = false,
@@ -67,18 +60,11 @@ class ProfileViewModel(
                                 name = profile.name,
                                 age = profile.age,
                                 monthlyIncome = profile.monthlyIncome,
-                                futureMonthlyIncome = profile.futureMonthlyIncome,
                                 monthlyExpenses = profile.monthlyExpenses,
                                 currentEquity = profile.currentEquity,
-                                existingCredits = profile.existingCredits,
                                 desiredLocation = profile.desiredLocation,
                                 desiredPropertySize = profile.desiredPropertySize,
                                 desiredPropertyType = profile.desiredPropertyType,
-                                targetDate = profile.targetDate,
-                                desiredChildren = profile.desiredChildren,
-                                avatarImage = profile.avatarImage,
-                                numberOfAdults = profile.familyMembers.count { member -> member.age >= 18 }.coerceAtLeast(1),
-                                numberOfChildren = profile.familyMembers.count { member -> member.age < 18 },
                                 isLoading = false,
                                 hasExistingProfile = true
                             )
@@ -94,8 +80,6 @@ class ProfileViewModel(
                                         monthlyIncome = user.netIncome,
                                         monthlyExpenses = user.expenses,
                                         currentEquity = user.wealth,
-                                        numberOfAdults = user.familyMembers.count { member -> member.age >= 18 },
-                                        numberOfChildren = user.familyMembers.count { member -> member.age < 18 },
                                         isLoading = false,
                                         hasExistingProfile = true
                                     )
@@ -171,55 +155,6 @@ class ProfileViewModel(
     }
     
     /**
-     * Update future monthly income
-     */
-    fun updateFutureMonthlyIncome(income: Double?) {
-        _uiState.update { it.copy(futureMonthlyIncome = income) }
-    }
-    
-    /**
-     * Update existing credits
-     */
-    fun updateExistingCredits(credits: Double) {
-        _uiState.update { it.copy(existingCredits = credits) }
-    }
-    
-    /**
-     * Update target date
-     */
-    fun updateTargetDate(date: String?) {
-        _uiState.update { it.copy(targetDate = date) }
-    }
-    
-    /**
-     * Update desired children
-     */
-    fun updateDesiredChildren(children: Int) {
-        _uiState.update { it.copy(desiredChildren = children) }
-    }
-    
-    /**
-     * Update avatar image
-     */
-    fun updateAvatarImage(image: String?) {
-        _uiState.update { it.copy(avatarImage = image) }
-    }
-    
-    /**
-     * Update number of adults
-     */
-    fun updateNumberOfAdults(adults: Int) {
-        _uiState.update { it.copy(numberOfAdults = adults) }
-    }
-    
-    /**
-     * Update number of children
-     */
-    fun updateNumberOfChildren(children: Int) {
-        _uiState.update { it.copy(numberOfChildren = children) }
-    }
-    
-    /**
      * Save profile changes
      */
     fun saveProfile() {
@@ -246,16 +181,11 @@ class ProfileViewModel(
                     name = state.name,
                     age = state.age,
                     monthlyIncome = state.monthlyIncome,
-                    futureMonthlyIncome = state.futureMonthlyIncome,
                     monthlyExpenses = state.monthlyExpenses,
                     currentEquity = state.currentEquity,
-                    existingCredits = state.existingCredits,
                     desiredLocation = state.desiredLocation,
                     desiredPropertySize = state.desiredPropertySize,
-                    desiredPropertyType = state.desiredPropertyType,
-                    targetDate = state.targetDate,
-                    desiredChildren = state.desiredChildren,
-                    avatarImage = state.avatarImage
+                    desiredPropertyType = state.desiredPropertyType
                 )
                 
                 // Save both user and partial profile for consistency
