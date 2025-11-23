@@ -100,6 +100,15 @@ fun InsightsScreen(
                     )
                 }
                 
+                // Balance Timeline Chart
+                item {
+                    BalanceTimelineChart(
+                        projectedSavingsData = uiState.projectedSavingsData,
+                        requiredDownPayment = uiState.requiredDownPayment,
+                        monthsToGoal = uiState.monthsToGoal
+                    )
+                }
+                
                 // Recent Transactions Card
                 item {
                     Text(
@@ -132,14 +141,28 @@ fun InsightsScreen(
                     }
                 }
                 
-                // Refresh button
+                // Action buttons
                 item {
                     Spacer(modifier = Modifier.height(8.dp))
-                    Button(
-                        onClick = { viewModel.refresh() },
-                        modifier = Modifier.fillMaxWidth()
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text("Refresh")
+                        Button(
+                            onClick = { viewModel.refresh() },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("Refresh")
+                        }
+                        Button(
+                            onClick = { viewModel.simulateBadMonth() },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.errorContainer
+                            )
+                        ) {
+                            Text("Simulate Bad Month")
+                        }
                     }
                 }
             }

@@ -38,7 +38,8 @@ fun SettingsScreen(
     val userRepository: UserRepository = koinInject()
     val coroutineScope = rememberCoroutineScope()
     
-    var isSimulating by remember { mutableStateOf(false) }
+    var isSimulatingMonth by remember { mutableStateOf(false) }
+    var isSimulatingBadMonth by remember { mutableStateOf(false) }
     var activeCoupon by remember { mutableStateOf<Coupon?>(null) }
     
     AppScaffold(
@@ -155,7 +156,7 @@ fun SettingsScreen(
                     Button(
                         onClick = {
                             coroutineScope.launch {
-                                isSimulating = true
+                                isSimulatingMonth = true
                                 try {
                                     val user = userRepository.getUser().first()
                                     if (user != null) {
@@ -164,17 +165,17 @@ fun SettingsScreen(
                                 } catch (e: Exception) {
                                     println("Error simulating month: ${e.message}")
                                 } finally {
-                                    isSimulating = false
+                                    isSimulatingMonth = false
                                 }
                             }
                         },
                         modifier = Modifier.fillMaxWidth(),
-                        enabled = !isSimulating,
+                        enabled = !isSimulatingMonth && !isSimulatingBadMonth,
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFF4CAF50) // Green color
                         )
                     ) {
-                        if (isSimulating) {
+                        if (isSimulatingMonth) {
                             CircularProgressIndicator(
                                 modifier = Modifier.size(16.dp),
                                 color = MaterialTheme.colorScheme.onPrimary
@@ -183,6 +184,40 @@ fun SettingsScreen(
                             Text("Simulating...")
                         } else {
                             Text("Simulate Month")
+                        }
+                    }
+
+                    Button(
+                        onClick = {
+                            coroutineScope.launch {
+                                isSimulatingBadMonth = true
+                                try {
+                                    val user = userRepository.getUser().first()
+                                    if (user != null) {
+                                        monthSimulationService.simulateBadMonth(user.id)
+                                    }
+                                } catch (e: Exception) {
+                                    println("Error simulating bad month: ${e.message}")
+                                } finally {
+                                    isSimulatingBadMonth = false
+                                }
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !isSimulatingMonth && !isSimulatingBadMonth,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer
+                        )
+                    ) {
+                        if (isSimulatingBadMonth) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(16.dp),
+                                color = MaterialTheme.colorScheme.onErrorContainer
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Simulating...")
+                        } else {
+                            Text("Simulate Bad Month")
                         }
                     }
 

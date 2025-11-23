@@ -182,8 +182,17 @@ class BudgetSyncServiceImpl(
         // Verify final balance matches user.wealth (should be correct due to starting balance calculation)
         // If there's a small discrepancy due to rounding, sync it
         val finalAccount = budgetTrackingRepository.getBankAccount(user.id).first()
-        if (finalAccount != null && kotlin.math.abs(finalAccount.balance - user.wealth) > 0.01) {
-            budgetTrackingRepository.updateBalance(user.id, user.wealth)
+        if (finalAccount != null) {
+            if (kotlin.math.abs(finalAccount.balance - user.wealth) > 0.01) {
+                budgetTrackingRepository.updateBalance(user.id, user.wealth)
+            }
+            
+            // Get the final balance after potential update
+            val updatedAccount = budgetTrackingRepository.getBankAccount(user.id).first()
+            val finalBalance = updatedAccount?.balance ?: user.wealth
+            
+            // Save historical balance for the previous month (where we just added transactions)
+            budgetTrackingRepository.saveHistoricalBalance(user.id, prevMonthStart, finalBalance)
         }
     }
 }
