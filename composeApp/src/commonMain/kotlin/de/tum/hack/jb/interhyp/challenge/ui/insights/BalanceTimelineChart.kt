@@ -24,6 +24,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import de.tum.hack.jb.interhyp.challenge.presentation.insights.ProjectedSavingsPoint
 import de.tum.hack.jb.interhyp.challenge.util.formatCurrency
+import jb_interhyp_challenge.composeapp.generated.resources.Res
+import jb_interhyp_challenge.composeapp.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 import kotlin.math.max
 import kotlin.math.min
 
@@ -46,7 +49,7 @@ fun BalanceTimelineChart(
             )
         ) {
             Text(
-                text = "Set a property goal to see your timeline",
+                text = stringResource(Res.string.set_property_goal_message),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(16.dp)
@@ -63,7 +66,7 @@ fun BalanceTimelineChart(
             )
         ) {
             Text(
-                text = "No savings data available",
+                text = stringResource(Res.string.no_savings_data),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(16.dp)
@@ -91,19 +94,19 @@ fun BalanceTimelineChart(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "🎉 You've already reached your goal!",
+                    text = stringResource(Res.string.goal_reached_title),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Current savings: ${formatCurrency(currentBalance)}",
+                    text = stringResource(Res.string.current_savings_label, formatCurrency(currentBalance)),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
                 Text(
-                    text = "Required: ${formatCurrency(requiredDownPayment)}",
+                    text = stringResource(Res.string.required_label, formatCurrency(requiredDownPayment)),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
@@ -130,14 +133,14 @@ fun BalanceTimelineChart(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "Increase your savings to reach your goal",
+                        text = stringResource(Res.string.increase_savings_title),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onErrorContainer
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Your current expenses exceed your income.",
+                        text = stringResource(Res.string.expenses_exceed_income),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onErrorContainer
                     )
@@ -181,13 +184,13 @@ fun BalanceTimelineChart(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Balance Timeline",
+                    text = stringResource(Res.string.balance_timeline_title),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 if (monthsToGoal != null) {
                     Text(
-                        text = "Goal in ${formatMonths(monthsToGoal)}",
+                        text = stringResource(Res.string.goal_in_months, formatMonths(monthsToGoal)),
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
@@ -424,11 +427,11 @@ fun BalanceTimelineChart(
                 ) {
                     LegendItem(
                         color = MaterialTheme.colorScheme.primary,
-                        label = "Historical"
+                        label = stringResource(Res.string.historical)
                     )
                     LegendItem(
                         color = MaterialTheme.colorScheme.tertiary,
-                        label = "Projected",
+                        label = stringResource(Res.string.projected),
                         isDashed = true
                     )
                 }
@@ -640,39 +643,41 @@ private fun LegendItem(
     }
 }
 
+@Composable
 private fun formatMonths(months: Int): String {
     return when {
-        months == 0 -> "Now"
+        months == 0 -> stringResource(Res.string.now)
         months < 0 -> {
             val absMonths = -months
             when {
-                absMonths < 12 -> "$absMonths mo ago"
-                absMonths % 12 == 0 -> "${absMonths / 12}y ago"
-                else -> "${absMonths / 12}y ${absMonths % 12}mo ago"
+                absMonths < 12 -> stringResource(Res.string.months_ago, absMonths)
+                absMonths % 12 == 0 -> stringResource(Res.string.years_ago, absMonths / 12)
+                else -> stringResource(Res.string.years_months_ago, absMonths / 12, absMonths % 12)
             }
         }
-        months < 12 -> "$months mo"
-        months % 12 == 0 -> "${months / 12}y"
-        else -> "${months / 12}y ${months % 12}mo"
+        months < 12 -> stringResource(Res.string.in_months, months)
+        months % 12 == 0 -> stringResource(Res.string.in_years, months / 12)
+        else -> stringResource(Res.string.in_years_months, months / 12, months % 12)
     }
 }
 
+@Composable
 private fun formatMonthLabel(monthIndex: Int): String {
     return when {
-        monthIndex == 0 -> "Now"
+        monthIndex == 0 -> stringResource(Res.string.now)
         monthIndex < 0 -> {
             val absMonths = -monthIndex
             when {
-                absMonths < 12 -> "$absMonths mo ago"
-                absMonths % 12 == 0 -> "${absMonths / 12}y ago"
-                else -> "${absMonths / 12}y ${absMonths % 12}mo ago"
+                absMonths < 12 -> stringResource(Res.string.months_ago, absMonths)
+                absMonths % 12 == 0 -> stringResource(Res.string.years_ago, absMonths / 12)
+                else -> stringResource(Res.string.years_months_ago, absMonths / 12, absMonths % 12)
             }
         }
         else -> {
             when {
-                monthIndex < 12 -> "in $monthIndex mo"
-                monthIndex % 12 == 0 -> "in ${monthIndex / 12}y"
-                else -> "in ${monthIndex / 12}y ${monthIndex % 12}mo"
+                monthIndex < 12 -> stringResource(Res.string.in_months, monthIndex)
+                monthIndex % 12 == 0 -> stringResource(Res.string.in_years, monthIndex / 12)
+                else -> stringResource(Res.string.in_years_months, monthIndex / 12, monthIndex % 12)
             }
         }
     }
