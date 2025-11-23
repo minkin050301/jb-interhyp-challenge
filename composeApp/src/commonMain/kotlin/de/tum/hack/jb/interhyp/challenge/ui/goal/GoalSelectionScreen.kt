@@ -44,7 +44,7 @@ fun GoalSelectionScreen(
     location: String,
     size: Double,
     propertyType: PropertyType,
-    onContinue: () -> Unit,
+    onContinue: (String?) -> Unit,
     viewModel: GoalSelectionViewModel = koinInject()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -187,7 +187,7 @@ fun GoalSelectionScreen(
                         Button(
                             onClick = {
                                 viewModel.saveGoal()
-                                onContinue()
+                                onContinue(uiState.selectedListing?.getMainImageUrl())
                             },
                             modifier = Modifier.fillMaxWidth(),
                             enabled = uiState.selectedListing != null

@@ -51,12 +51,23 @@ import org.jetbrains.compose.resources.readResourceBytes
 import de.tum.hack.jb.interhyp.challenge.data.network.ImageUtils
 import de.tum.hack.jb.interhyp.challenge.util.formatCurrency
 
+import de.tum.hack.jb.interhyp.challenge.data.repository.UserRepository
+import io.ktor.client.HttpClient
+import io.ktor.client.call.body
+import io.ktor.client.request.get
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
+
 @OptIn(ExperimentalResourceApi::class)
 @Composable
 fun MainScreen(themeViewModel: ThemeViewModel) {
     // Inject DashboardViewModel - image generation is now started in App.kt during onboarding
     val dashboardViewModel: DashboardViewModel = koinInject()
     val vertexAIRepository: VertexAIRepository = koinInject()
+    val userRepository: UserRepository = koinInject()
+    val httpClient: HttpClient = koinInject()
+    
     val uiState by dashboardViewModel.uiState.collectAsState()
     
     // Load resources for stage image generation
@@ -65,7 +76,22 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
 
     LaunchedEffect(Unit) {
         neighborhoodBytes = Res.readBytes("drawable/neighborhood.png")
-        houseBytes = Res.readBytes("drawable/house.png")
+        
+        // Get user's house image if available
+        val user = userRepository.getUser().first()
+        val houseUrl = user?.goalPropertyImageUrl
+        
+        houseBytes = if (houseUrl != null) {
+            try {
+                withContext(Dispatchers.Default) {
+                    httpClient.get(houseUrl).body<ByteArray>()
+                }
+            } catch (e: Exception) {
+                Res.readBytes("drawable/house.png")
+            }
+        } else {
+            Res.readBytes("drawable/house.png")
+        }
     }
     
     // Automatically generate all 4 building stages in parallel after main composite image is ready

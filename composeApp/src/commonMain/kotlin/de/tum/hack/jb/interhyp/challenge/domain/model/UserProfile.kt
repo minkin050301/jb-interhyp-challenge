@@ -24,7 +24,8 @@ data class UserProfile(
     val avatarImage: String? = null, // Base64 encoded image or URL
     val familyMembers: List<Person> = emptyList(),
     val goalPropertyPrice: Double? = null,
-    val goalPropertySize: Double? = null
+    val goalPropertySize: Double? = null,
+    val goalPropertyImageUrl: String? = null
 ) {
     /**
      * Calculate monthly savings capacity
@@ -46,7 +47,8 @@ data class UserProfile(
             wealth = currentEquity,
             familyMembers = familyMembers,
             goalPropertyPrice = goalPropertyPrice,
-            goalPropertySize = goalPropertySize
+            goalPropertySize = goalPropertySize,
+            goalPropertyImageUrl = goalPropertyImageUrl
         )
     }
 }

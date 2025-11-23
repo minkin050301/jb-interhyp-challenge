@@ -38,7 +38,8 @@ data class OnboardingUiState(
     val isLoading: Boolean = false,
     val isGeneratingAvatar: Boolean = false,
     val errorMessage: String? = null,
-    val isCompleted: Boolean = false
+    val isCompleted: Boolean = false,
+    val goalPropertyImageUrl: String? = null
 )
 
 /**
@@ -168,6 +169,13 @@ class OnboardingViewModel(
     }
     
     /**
+     * Update goal property image URL
+     */
+    fun updateGoalPropertyImage(url: String?) {
+        _uiState.update { it.copy(goalPropertyImageUrl = url) }
+    }
+    
+    /**
      * Generate avatar from selfie using Vertex AI
      */
     fun generateAvatar(selfieBase64: String) {
@@ -252,7 +260,8 @@ class OnboardingViewModel(
                     desiredPropertyType = state.desiredPropertyType,
                     targetDate = state.targetDate,
                     desiredChildren = state.desiredChildren,
-                    avatarImage = state.avatarImage
+                    avatarImage = state.avatarImage,
+                    goalPropertyImageUrl = state.goalPropertyImageUrl
                 )
                 
                 // Save partial profile
@@ -287,6 +296,7 @@ class OnboardingViewModel(
                                 targetDate = it.targetDate,
                                 desiredChildren = it.desiredChildren,
                                 avatarImage = it.avatarImage,
+                                goalPropertyImageUrl = it.goalPropertyImageUrl,
                                 numberOfAdults = it.familyMembers.count { member -> member.age >= 18 }.coerceAtLeast(1),
                                 numberOfChildren = it.familyMembers.count { member -> member.age < 18 }
                             )
@@ -335,7 +345,8 @@ class OnboardingViewModel(
                     desiredPropertyType = state.desiredPropertyType,
                     targetDate = state.targetDate,
                     desiredChildren = state.desiredChildren,
-                    avatarImage = state.avatarImage
+                    avatarImage = state.avatarImage,
+                    goalPropertyImageUrl = state.goalPropertyImageUrl
                 )
                 
                 // Save user with selfie
