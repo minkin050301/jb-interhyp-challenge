@@ -32,7 +32,7 @@ val networkModule = module {
  */
 val dataModule = module {
     single<PropertyRepository> { PropertyRepositoryImpl(get()) }
-    single<BudgetRepository> { BudgetRepositoryImpl() }
+    single<BudgetRepository> { BudgetRepositoryImpl(get()) }
     single<UserRepository> { UserRepositoryImpl() }
     single<BudgetCalculationService> { BudgetCalculationServiceImpl() }
     single<BudgetTrackingRepository> { BudgetTrackingRepositoryImpl() }
