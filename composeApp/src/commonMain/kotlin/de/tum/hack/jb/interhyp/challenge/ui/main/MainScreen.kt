@@ -60,6 +60,13 @@ import org.jetbrains.compose.resources.readResourceBytes
 import de.tum.hack.jb.interhyp.challenge.data.network.ImageUtils
 import de.tum.hack.jb.interhyp.challenge.util.formatCurrency
 import kotlin.math.floor
+import de.tum.hack.jb.interhyp.challenge.data.repository.UserRepository
+import io.ktor.client.HttpClient
+import io.ktor.client.call.body
+import io.ktor.client.request.get
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
 
 /**
  * Format number to thousands (e.g., 42321 -> "42k", 180323 -> "180k")
@@ -68,14 +75,6 @@ private fun formatToThousands(amount: Double): String {
     val thousands = floor(amount / 1000.0).toInt()
     return "${thousands}k"
 }
-
-import de.tum.hack.jb.interhyp.challenge.data.repository.UserRepository
-import io.ktor.client.HttpClient
-import io.ktor.client.call.body
-import io.ktor.client.request.get
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable
