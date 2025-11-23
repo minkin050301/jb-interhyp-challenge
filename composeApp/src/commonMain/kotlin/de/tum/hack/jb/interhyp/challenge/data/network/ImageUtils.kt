@@ -1,5 +1,7 @@
 package de.tum.hack.jb.interhyp.challenge.data.network
 
+import androidx.compose.ui.graphics.ImageBitmap
+
 /**
  * Utility functions for image processing
  */
@@ -44,4 +46,9 @@ object ImageUtils {
         }
     }
 }
+
+/**
+ * Platform-specific image decoding from bytes to ImageBitmap
+ */
+expect fun decodeImageBitmap(imageBytes: ByteArray): ImageBitmap
 
