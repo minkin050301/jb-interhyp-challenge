@@ -6,9 +6,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -20,6 +24,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import de.tum.hack.jb.interhyp.challenge.ui.components.AppScaffold
 import de.tum.hack.jb.interhyp.challenge.ui.components.Insights
@@ -52,6 +57,7 @@ import de.tum.hack.jb.interhyp.challenge.data.repository.VertexAIRepository
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.readResourceBytes
 import de.tum.hack.jb.interhyp.challenge.data.network.ImageUtils
+import de.tum.hack.jb.interhyp.challenge.util.formatCurrency
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable
@@ -113,9 +119,6 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
         }
     }
 
-    // Placeholder progress; in future wire to persisted user data / ViewModel StateFlow
-    val progress = 0.35f
-    
     // Simple state-based navigation
     var currentScreen by remember { mutableStateOf<String?>("home") }
 
@@ -151,11 +154,13 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
                 },
                 onHomeClick = { currentScreen = "home" }
             ) { innerPadding: PaddingValues ->
+                val scrollState = rememberScrollState()
                 Column(
                     modifier = Modifier
                         .background(MaterialTheme.colorScheme.background)
                         .fillMaxSize()
-                        .padding(innerPadding),
+                        .padding(innerPadding)
+                        .verticalScroll(scrollState),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
@@ -167,7 +172,12 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
                     )
                     
                     val backgroundColor = MaterialTheme.colorScheme.background
-                    Box(contentAlignment = Alignment.Center) {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(400.dp) // Constrain image height so progress bar is visible
+                    ) {
                         if (uiState.generatedHouseImage != null) {
                             // Show the generated composite image
                             val bitmap = byteArrayToImageBitmap(ImageUtils.decodeBase64ToImage(uiState.generatedHouseImage!!.base64Data))
@@ -175,8 +185,10 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
                                 Image(
                                     bitmap = bitmap,
                                     contentDescription = "Generated House in Neighborhood",
-                                    modifier = Modifier.fillMaxWidth(),
-                                    contentScale = ContentScale.FillWidth
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(400.dp),
+                                    contentScale = ContentScale.Crop
                                 )
                             }
                         } else {
@@ -186,6 +198,7 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
                                 contentDescription = "Neighborhood",
                                 modifier = Modifier
                                     .fillMaxWidth()
+                                    .height(400.dp)
                                     .drawWithContent {
                                         drawContent()
                                         drawRect(
@@ -197,7 +210,7 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
                                             )
                                         )
                                     },
-                                contentScale = ContentScale.FillWidth
+                                contentScale = ContentScale.Crop
                             )
                             
                             // Show loading indicator while generating
@@ -209,16 +222,73 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
                         }
                     }
 
+                    // Progress bar showing current balance and down payment goal
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text("Your savings progress", style = MaterialTheme.typography.titleMedium)
-                        LinearProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth())
-                        Text("${(progress * 100).toInt()}% complete", style = MaterialTheme.typography.bodyLarge)
+                        Text(
+                            "Your savings progress", 
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                        
+                        // Display current balance and target down payment
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    "Current Balance",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Text(
+                                    formatCurrency(uiState.currentSavings),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    "Down Payment Goal",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Text(
+                                    formatCurrency(uiState.targetSavings),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                        
+                        // Progress bar
+                        LinearProgressIndicator(
+                            progress = { uiState.savingsProgress.coerceIn(0f, 1f) }, 
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        
+                        // Percentage complete
+                        Text(
+                            "${(uiState.savingsProgress * 100).toInt()}% complete",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.primary
+                        )
                     }
                 }
             }

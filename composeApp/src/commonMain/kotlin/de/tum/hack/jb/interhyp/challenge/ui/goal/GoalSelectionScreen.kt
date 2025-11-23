@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -29,13 +30,13 @@ import androidx.compose.ui.unit.sp
 import de.tum.hack.jb.interhyp.challenge.domain.model.PropertyListingDto
 import de.tum.hack.jb.interhyp.challenge.domain.model.PropertyType
 import de.tum.hack.jb.interhyp.challenge.presentation.goal.GoalSelectionViewModel
-import de.tum.hack.jb.interhyp.challenge.ui.util.byteArrayToImageBitmap
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.skia.Image as SkiaImage
 import org.koin.compose.koinInject
 
 @Composable
@@ -158,50 +159,6 @@ fun GoalSelectionScreen(
             
                 uiState.listings.isNotEmpty() && !uiState.isLoading && uiState.errorMessage == null -> {
                     Column(modifier = Modifier.fillMaxSize()) {
-                        // Fallback indicator banner
-                        if (uiState.isFallback) {
-                            Card(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.secondaryContainer
-                                )
-                            ) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(12.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Column(
-                                        modifier = Modifier.weight(1f),
-                                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                                    ) {
-                                        Text(
-                                            text = "Using Estimated Prices",
-                                            style = MaterialTheme.typography.titleSmall,
-                                            fontWeight = FontWeight.Bold,
-                                            color = MaterialTheme.colorScheme.onSecondaryContainer
-                                        )
-                                        Text(
-                                            text = "Service unavailable. Prices calculated from average market rates per sqm.",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSecondaryContainer
-                                        )
-                                    }
-                                    Button(
-                                        onClick = { viewModel.retrySearch() },
-                                        modifier = Modifier.padding(start = 8.dp),
-                                        enabled = !uiState.isLoading
-                                    ) {
-                                        Text("Retry")
-                                    }
-                                }
-                            }
-                        }
-                        
                         // LazyColumn to take available space
                         LazyColumn(
                             verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -222,34 +179,6 @@ fun GoalSelectionScreen(
                                         viewModel.selectListing(listing) 
                                     }
                                 )
-                            }
-                            
-                            // Load More button as last item
-                            if (uiState.hasMoreResults) {
-                                item {
-                                    Button(
-                                        onClick = { viewModel.loadMoreProperties() },
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(horizontal = 8.dp, vertical = 8.dp),
-                                        enabled = !uiState.isLoadingMore
-                                    ) {
-                                        if (uiState.isLoadingMore) {
-                                            Row(
-                                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                                verticalAlignment = Alignment.CenterVertically
-                                            ) {
-                                                CircularProgressIndicator(
-                                                    modifier = Modifier.size(16.dp),
-                                                    strokeWidth = 2.dp
-                                                )
-                                                Text("Loading more...")
-                                            }
-                                        } else {
-                                            Text("Load More Properties")
-                                        }
-                                    }
-                                }
                             }
                         }
                         
@@ -298,6 +227,7 @@ private fun PropertyListingCard(
 ) {
     val httpClient: HttpClient = koinInject()
     var imageBitmap by remember(listing.id) { mutableStateOf<ImageBitmap?>(null) }
+    var imageLoadingError by remember(listing.id) { mutableStateOf<String?>(null) }
     val imageUrl = listing.getMainImageUrl()
     
     // Load image if URL is available
@@ -311,10 +241,12 @@ private fun PropertyListingCard(
                         }
                     }.body<ByteArray>()
                 }
-                imageBitmap = byteArrayToImageBitmap(imageBytes)
+                imageBitmap = SkiaImage.makeFromEncoded(imageBytes).toComposeImageBitmap()
+                imageLoadingError = null
             } catch (e: Exception) {
                 // Image loading failed, keep null to show placeholder
                 imageBitmap = null
+                imageLoadingError = e.message
             }
         }
     }
@@ -385,17 +317,15 @@ private fun PropertyListingCard(
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 // Title
-                listing.title?.let { title ->
-                    if (title.isNotBlank()) {
-                        Text(
-                            text = title,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            maxLines = 2,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            lineHeight = 20.sp
-                        )
-                    }
+                if (!listing.title.isNullOrBlank()) {
+                    Text(
+                        text = listing.title!!,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 2,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        lineHeight = 20.sp
+                    )
                 }
                 
                 // Location
