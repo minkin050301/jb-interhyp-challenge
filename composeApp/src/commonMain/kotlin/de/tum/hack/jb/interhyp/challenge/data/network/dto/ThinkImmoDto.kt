@@ -9,12 +9,13 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 data class ThinkImmoRequestDto(
-    val active: Boolean = true,
+    @SerialName("active")
+    val active: String, // API expects string "True"/"False", not boolean
     val type: PropertyTypeDto,
-    val sortBy: SortDirection = SortDirection.DESC,
-    val sortKey: SortKey = SortKey.PRICE_PER_SQM,
-    val from: Int = 0,
-    val size: Int = 20,
+    val sortBy: SortDirection,
+    val sortKey: SortKey,
+    val from: Int,
+    val size: Int,
     val geoSearches: GeoSearchDto? = null
 )
 
@@ -96,6 +97,14 @@ data class AverageValueDto(
 )
 
 @Serializable
+data class ImageDto(
+    val id: String,
+    val originalUrl: String,
+    val title: String? = null,
+    val floorPlan: Boolean = false
+)
+
+@Serializable
 data class ResultItemDto(
     val id: String,
     val title: String? = null,
@@ -127,7 +136,8 @@ data class ResultItemDto(
     val garden: Boolean? = null,
     val parking: Boolean? = null,
     val elevator: Boolean? = null,
-    val cellar: Boolean? = null
+    val cellar: Boolean? = null,
+    val images: List<ImageDto>? = null
 )
 
 @Serializable

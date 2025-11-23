@@ -44,6 +44,7 @@ fun AppScaffold(
     selectedItemId: String? = null,
     onItemSelected: (String) -> Unit = {},
     onHomeClick: () -> Unit = {},
+    containerColor: Color = MaterialTheme.colorScheme.background,
     content: @Composable (PaddingValues) -> Unit,
 ) {
     Scaffold(
@@ -56,7 +57,7 @@ fun AppScaffold(
                 onHomeClick = onHomeClick
             )
         },
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = containerColor
     ) { innerPadding ->
         content(innerPadding)
     }
@@ -77,7 +78,7 @@ private fun ModernNavBar(
         color = MaterialTheme.colorScheme.surface,
         tonalElevation = 8.dp,
         shadowElevation = 8.dp,
-        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+        shape = RoundedCornerShape(0.dp) // Rectangular shape (no rounded corners)
     ) {
         Row(
             modifier = Modifier

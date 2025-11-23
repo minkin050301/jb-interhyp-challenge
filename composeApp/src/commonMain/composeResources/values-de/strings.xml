@@ -6,8 +6,10 @@
     <string name="step_2_of">Schritt 2 von %1$d</string>
     <string name="step_3_of">Schritt 3 von %1$d</string>
     <string name="step_4_of">Schritt 4 von %1$d</string>
+    <string name="step_5_of">Schritt 5 von %1$d</string>
     <string name="step_welcome">Willkommen</string>
     <string name="step_your_target">Ihr Ziel</string>
+    <string name="step_goal_selection">Wählen Sie Ihr Traumhaus</string>
     <string name="step_about_you">Über Sie</string>
     <string name="step_selfie_verification">Selfie-Verifizierung</string>
     <string name="summary">Zusammenfassung</string>

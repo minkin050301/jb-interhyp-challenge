@@ -14,19 +14,40 @@ import kotlinx.coroutines.flow.flow
  */
 interface VertexAIRepository {
     /**
-     * Generate an image based on a text prompt and an input image.
-     * 
+     * Generate an image based on a text prompt and multiple input images.
+     *
      * @param prompt Text description for image generation
-     * @param inputImageBase64 Base64 encoded input image
-     * @param mimeType MIME type of the input image (e.g., "image/jpeg", "image/png")
+     * @param inputImages List of Base64 encoded input images with their mime types
      * @param temperature Controls randomness (0.0-2.0, default 1.0)
+     * @param aspectRatio Aspect ratio for the generated image (e.g., "9:16", "16:9", "1:1")
      * @return Flow emitting NetworkResult with generated images
+     */
+    suspend fun generateImage(
+        prompt: String,
+        inputImages: List<Pair<String, String>>, // Pair of (base64Data, mimeType)
+        temperature: Double = 1.0,
+        aspectRatio: String? = null
+    ): Flow<NetworkResult<List<GeneratedImage>>>
+    
+    /**
+     * Generate an image based on a text prompt and an input image (Legacy overload).
      */
     suspend fun generateImage(
         prompt: String,
         inputImageBase64: String,
         mimeType: String = "image/jpeg",
-        temperature: Double = 1.0
+        temperature: Double = 1.0,
+        aspectRatio: String? = null
+    ): Flow<NetworkResult<List<GeneratedImage>>>
+
+    /**
+     * Generate content using flexible parts (text, inline images, file URIs).
+     * This allows constructing complex requests with specific order of parts.
+     */
+    suspend fun generateContent(
+        parts: List<VertexAIInputPart>,
+        temperature: Double = 1.0,
+        aspectRatio: String? = null
     ): Flow<NetworkResult<List<GeneratedImage>>>
 }
 
@@ -54,39 +75,84 @@ class VertexAIRepositoryImpl(
         prompt: String,
         inputImageBase64: String,
         mimeType: String,
-        temperature: Double
+        temperature: Double,
+        aspectRatio: String?
+    ): Flow<NetworkResult<List<GeneratedImage>>> = generateImage(
+        prompt = prompt,
+        inputImages = listOf(inputImageBase64 to mimeType),
+        temperature = temperature,
+        aspectRatio = aspectRatio
+    )
+
+    override suspend fun generateImage(
+        prompt: String,
+        inputImages: List<Pair<String, String>>,
+        temperature: Double,
+        aspectRatio: String?
+    ): Flow<NetworkResult<List<GeneratedImage>>> {
+        val parts = mutableListOf<VertexAIInputPart>()
+        // Add input images first (as per convention for this helper)
+        inputImages.forEach { (base64Data, mimeType) ->
+            parts.add(VertexAIInputPart.InlineImage(base64Data, mimeType))
+        }
+        // Add text prompt
+        parts.add(VertexAIInputPart.Text(prompt))
+        
+        return generateContent(parts, temperature, aspectRatio)
+    }
+
+    override suspend fun generateContent(
+        parts: List<VertexAIInputPart>,
+        temperature: Double,
+        aspectRatio: String?
     ): Flow<NetworkResult<List<GeneratedImage>>> = flow {
         emit(NetworkResult.Loading)
         
         try {
             // Validate inputs
-            require(prompt.isNotBlank()) { "Prompt cannot be blank" }
-            require(inputImageBase64.isNotBlank()) { "Input image data cannot be blank" }
+            require(parts.isNotEmpty()) { "At least one part is required" }
             require(temperature in 0.0..2.0) { "Temperature must be between 0.0 and 2.0" }
+            
+            // Map domain parts to API parts
+            val apiParts = parts.map { inputPart ->
+                when (inputPart) {
+                    is VertexAIInputPart.Text -> Part(text = inputPart.text)
+                    is VertexAIInputPart.InlineImage -> Part(
+                        inlineData = InlineData(
+                            mimeType = inputPart.mimeType,
+                            data = inputPart.base64
+                        )
+                    )
+                    is VertexAIInputPart.FileImage -> Part(
+                        fileData = FileData(
+                            mimeType = inputPart.mimeType,
+                            fileUri = inputPart.uri
+                        )
+                    )
+                }
+            }
             
             // Prepare request
             val request = VertexAIRequest(
                 contents = listOf(
                     Content(
                         role = "user",
-                        parts = listOf(
-                            // First part: input image
-                            Part(
-                                inlineData = InlineData(
-                                    mimeType = mimeType,
-                                    data = inputImageBase64
-                                )
-                            ),
-                            // Second part: text prompt
-                            Part(
-                                text = prompt
-                            )
-                        )
+                        parts = apiParts
                     )
                 ),
                 generationConfig = GenerationConfig(
                     temperature = temperature,
-                    candidateCount = 1
+                    maxOutputTokens = 32768,
+                    responseModalities = listOf("TEXT", "IMAGE"),
+                    topP = 0.95,
+                    imageConfig = ImageConfig(
+                        aspectRatio = aspectRatio ?: "9:16",
+                        imageSize = "1K",
+                        imageOutputOptions = ImageOutputOptions(
+                            mimeType = "image/png"
+                        ),
+                        personGeneration = "ALLOW_ALL"
+                    )
                 )
             )
             
@@ -139,8 +205,7 @@ class VertexAIRepositoryImpl(
         } catch (e: IllegalArgumentException) {
             emit(NetworkResult.Error("Invalid input: ${e.message}", e))
         } catch (e: Exception) {
-            emit(NetworkResult.Error("Failed to generate image: ${e.message}", e))
+            emit(NetworkResult.Error("Failed to generate content: ${e.message}", e))
         }
     }
 }
-

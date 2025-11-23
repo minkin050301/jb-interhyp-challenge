@@ -59,6 +59,7 @@ import de.tum.hack.jb.interhyp.challenge.domain.model.PropertyType
 import de.tum.hack.jb.interhyp.challenge.presentation.onboarding.OnboardingViewModel
 import de.tum.hack.jb.interhyp.challenge.util.LocaleManager
 import de.tum.hack.jb.interhyp.challenge.ui.locale.LocalePreference
+import de.tum.hack.jb.interhyp.challenge.ui.goal.GoalSelectionScreen
 import org.koin.compose.koinInject
 import org.jetbrains.compose.resources.stringResource
 import jb_interhyp_challenge.composeapp.generated.resources.Res
@@ -72,9 +73,9 @@ fun OnboardingScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    // Steps: 0 = Greeting, 1 = Target, 2 = Personal, 3 = Selfie, 4 = Summary
+    // Steps: 0 = Greeting, 1 = Target, 2 = Goal Selection, 3 = Personal, 4 = Selfie, 5 = Summary
     var currentStep by remember { mutableStateOf(0) }
-    val totalSteps = 4 // excluding summary presentation
+    val totalSteps = 5 // excluding summary presentation
 
     // Local UI state for form fields (strings for text input)
     var userName by remember { mutableStateOf("") }
@@ -238,8 +239,9 @@ fun OnboardingScreen(
         val stepLabel = when (currentStep) {
             0 -> "${stringResource(Res.string.step_1_of, totalSteps)} · ${stringResource(Res.string.step_welcome)}"
             1 -> "${stringResource(Res.string.step_2_of, totalSteps)} · ${stringResource(Res.string.step_your_target)}"
-            2 -> "${stringResource(Res.string.step_3_of, totalSteps)} · ${stringResource(Res.string.step_about_you)}"
-            3 -> "${stringResource(Res.string.step_4_of, totalSteps)} · ${stringResource(Res.string.step_selfie_verification)}"
+            2 -> "${stringResource(Res.string.step_3_of, totalSteps)} · ${stringResource(Res.string.step_goal_selection)}"
+            3 -> "${stringResource(Res.string.step_4_of, totalSteps)} · ${stringResource(Res.string.step_about_you)}"
+            4 -> "${stringResource(Res.string.step_5_of, totalSteps)} · ${stringResource(Res.string.step_selfie_verification)}"
             else -> stringResource(Res.string.summary)
         }
         Text(
@@ -285,6 +287,20 @@ fun OnboardingScreen(
                 }
             }
             2 -> {
+                // Goal Selection Step - moved to right after target
+                val propertyType = if (targetType == "House") PropertyType.HOUSE else PropertyType.APARTMENT
+                val size = toDoubleSafe(sizeSqm) ?: 80.0
+                GoalSelectionScreen(
+                    location = location.ifBlank { "Munich" },
+                    size = size,
+                    propertyType = propertyType,
+                    onContinue = {
+                        syncFormToViewModel()
+                        currentStep = 3 // Move to personal info
+                    }
+                )
+            }
+            3 -> {
                 ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         SectionTitle(stringResource(Res.string.about_you))
@@ -340,7 +356,7 @@ fun OnboardingScreen(
                     }
                 }
             }
-            3 -> {
+            4 -> {
                 ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                     Column(
                         Modifier.padding(16.dp),
@@ -487,22 +503,32 @@ fun OnboardingScreen(
             val canGoNext = when (currentStep) {
                 0 -> greetingValid
                 1 -> targetValid
-                2 -> personalValid
-                3 -> selfieValid
+                2 -> true // Goal selection handles its own navigation
+                3 -> personalValid
+                4 -> selfieValid
                 else -> false
             }
 
-            if (currentStep < 3) {
+            if (currentStep < 2) {
                 Button(onClick = {
                     syncFormToViewModel()
                     viewModel.saveIntermediateProgress()
                     currentStep += 1
                 }, enabled = canGoNext) { Text(stringResource(Res.string.next)) }
-            } else if (currentStep == 3) {
+            } else if (currentStep == 2) {
+                // Goal selection handles its own continue button
+                // No button needed here
+            } else if (currentStep < 4) {
                 Button(onClick = {
                     syncFormToViewModel()
                     viewModel.saveIntermediateProgress()
-                    currentStep = 4
+                    currentStep += 1
+                }, enabled = canGoNext) { Text(stringResource(Res.string.next)) }
+            } else if (currentStep == 4) {
+                Button(onClick = {
+                    syncFormToViewModel()
+                    viewModel.saveIntermediateProgress()
+                    currentStep = 5 // Move to summary
                 }, enabled = canGoNext) { Text(stringResource(Res.string.review_summary)) }
             } else {
                 Button(
@@ -546,7 +572,7 @@ fun OnboardingScreen(
         }
 
         // Proceed Later button - save progress and exit onboarding
-        if (currentStep < 3) {
+        if (currentStep < 5) {
             Button(
                 onClick = {
                     syncFormToViewModel()

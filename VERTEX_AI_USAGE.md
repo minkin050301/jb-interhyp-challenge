@@ -106,6 +106,35 @@ class ImageGenerationExample : KoinComponent {
 }
 ```
 
+### Advanced Usage: Mixed Content (Text + Images + Files)
+
+For complex requests involving specific ordering of text, images, and file URIs:
+
+```kotlin
+import de.tum.hack.jb.interhyp.challenge.domain.model.VertexAIInputPart
+
+suspend fun generateComplexRequest() {
+    val parts = listOf(
+        VertexAIInputPart.Text("A high-quality 3D app icon of a house..."),
+        VertexAIInputPart.FileImage(
+            uri = "gs://your-bucket/image.jpg", 
+            mimeType = "image/jpeg"
+        ),
+        VertexAIInputPart.InlineImage(
+            base64 = "...", 
+            mimeType = "image/jpeg"
+        )
+    )
+
+    vertexAIRepository.generateContent(
+        parts = parts,
+        temperature = 1.0
+    ).collect { result ->
+        // Handle result
+    }
+}
+```
+
 ### Using in a ViewModel
 
 ```kotlin
@@ -297,4 +326,3 @@ For issues specific to this integration, please check:
 2. API quotas and limits
 3. Network connectivity
 4. Input validation (image size, format, prompt length)
-
