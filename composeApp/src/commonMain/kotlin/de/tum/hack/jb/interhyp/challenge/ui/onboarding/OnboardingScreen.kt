@@ -44,7 +44,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.input.KeyboardType
@@ -53,7 +52,6 @@ import de.tum.hack.jb.interhyp.challenge.data.network.ImageUtils
 import de.tum.hack.jb.interhyp.challenge.util.getFocusManager
 import de.tum.hack.jb.interhyp.challenge.ui.components.ImagePicker
 import de.tum.hack.jb.interhyp.challenge.ui.components.DatePickerField
-import org.jetbrains.skia.Image as SkiaImage
 import de.tum.hack.jb.interhyp.challenge.ui.util.byteArrayToImageBitmap
 import de.tum.hack.jb.interhyp.challenge.domain.model.PropertyType
 import de.tum.hack.jb.interhyp.challenge.presentation.onboarding.OnboardingViewModel

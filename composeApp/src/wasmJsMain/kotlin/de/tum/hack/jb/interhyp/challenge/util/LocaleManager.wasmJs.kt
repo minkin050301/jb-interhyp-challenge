@@ -1,11 +1,20 @@
 package de.tum.hack.jb.interhyp.challenge.util
 
+// External declarations for localStorage API
+private external interface Storage {
+    fun getItem(key: String): String?
+    fun setItem(key: String, value: String)
+}
+
+@JsName("localStorage")
+private external val localStorage: Storage
+
 /**
  * Get the saved locale preference from localStorage
  */
 actual fun getSavedLocale(): String {
     return try {
-        js("localStorage.getItem('appLocale') || 'en'") as? String ?: "en"
+        localStorage.getItem("appLocale") ?: "en"
     } catch (e: Exception) {
         "en"
     }
@@ -30,7 +39,7 @@ fun initLocaleManager() {
 actual fun updatePlatformLocale(localeCode: String) {
     // Store in localStorage for persistence
     try {
-        js("localStorage.setItem('appLocale', localeCode)")
+        localStorage.setItem("appLocale", localeCode)
     } catch (e: Exception) {
         // Silently fail if localStorage is not available
     }
