@@ -6,6 +6,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.key
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -50,8 +52,8 @@ fun App(themeViewModel: ThemeViewModel? = null) {
     val httpClient: HttpClient = koinInject()
     
     // Preserve navigation state across locale changes
-    var showMain by remember { mutableStateOf(false) }
-    var currentMainScreen by remember { mutableStateOf("home") }
+    var showMain by rememberSaveable { mutableStateOf(false) }
+    var currentMainScreen by rememberSaveable { mutableStateOf("home") }
     
     // Start background image loading and generation (fire and forget, non-blocking)
     LaunchedEffect(Unit) {
