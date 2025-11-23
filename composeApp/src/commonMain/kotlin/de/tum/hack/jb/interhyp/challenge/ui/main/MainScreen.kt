@@ -225,8 +225,8 @@ fun MainScreen(
                         ) {
                             // Logic for displaying content based on progress percentage
                             when {
-                                // 0-25%: Show empty neighborhood (no building)
-                                progress < 0.25f -> {
+                                // 0-20%: Show empty neighborhood (no building)
+                                progress < 0.20f -> {
                                     Image(
                                         painter = painterResource(Res.drawable.neighborhood),
                                         contentDescription = "Neighborhood",
@@ -234,8 +234,8 @@ fun MainScreen(
                                         contentScale = ContentScale.FillWidth
                                     )
                                 }
-                                // 25-50%: Show Pit Video
-                                progress < 0.5f -> {
+                                // 20-40%: Show Pit Video
+                                progress < 0.40f -> {
                                     val videoBytes = pitBytes
                                     val isWeb = getPlatform().name.startsWith("Web")
 
@@ -295,8 +295,20 @@ fun MainScreen(
                                         )
                                     }
                                 }
-                                // 50-75%: Show STAGE_3
-                                progress < 0.75f && uiState.buildingStageImages.stage3Walls != null -> {
+                                // 40-60%: Show STAGE_2
+                                progress < 0.60f && uiState.buildingStageImages.stage2Frame != null -> {
+                                    val bitmap = byteArrayToImageBitmap(ImageUtils.decodeBase64ToImage(uiState.buildingStageImages.stage2Frame!!.base64Data))
+                                    if (bitmap != null) {
+                                        Image(
+                                            bitmap = bitmap,
+                                            contentDescription = "Construction Stage 2",
+                                            modifier = Modifier.fillMaxWidth(),
+                                            contentScale = ContentScale.FillWidth
+                                        )
+                                    }
+                                }
+                                // 60-80%: Show STAGE_3
+                                progress < 0.80f && uiState.buildingStageImages.stage3Walls != null -> {
                                     val bitmap = byteArrayToImageBitmap(ImageUtils.decodeBase64ToImage(uiState.buildingStageImages.stage3Walls!!.base64Data))
                                     if (bitmap != null) {
                                         Image(
@@ -307,7 +319,7 @@ fun MainScreen(
                                         )
                                     }
                                 }
-                                // 75-100%: Show STAGE_4
+                                // 80-100%: Show STAGE_4
                                 progress < 1.0f && uiState.buildingStageImages.stage4Finishing != null -> {
                                     val bitmap = byteArrayToImageBitmap(ImageUtils.decodeBase64ToImage(uiState.buildingStageImages.stage4Finishing!!.base64Data))
                                     if (bitmap != null) {
@@ -496,8 +508,8 @@ fun MainScreen(
                                         )
                                     }
 
-                                    // Draw checkpoint lines at 25%, 50%, 75%
-                                    val checkpoints = listOf(0.25f, 0.5f, 0.75f)
+                                    // Draw checkpoint lines at 20%, 40%, 60%, 80%
+                                    val checkpoints = listOf(0.2f, 0.4f, 0.6f, 0.8f)
                                     checkpoints.forEach { checkpoint ->
                                         val x = size.width * checkpoint
                                         // Draw majestic vertical line extending above and below
@@ -517,7 +529,7 @@ fun MainScreen(
                                     .fillMaxWidth()
                                     .height(50.dp)
                             ) {
-                            val checkpoints = listOf(0.25f, 0.5f, 0.75f)
+                            val checkpoints = listOf(0.2f, 0.4f, 0.6f, 0.8f)
                             val currentProgress = uiState.savingsProgress.coerceIn(0f, 1f)
                             
                             checkpoints.forEach { checkpoint ->

@@ -12,6 +12,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.key
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import de.tum.hack.jb.interhyp.challenge.ui.theme.AppTheme
+import de.tum.hack.jb.interhyp.challenge.ui.welcome.WelcomeScreen
 import de.tum.hack.jb.interhyp.challenge.ui.main.MainScreen
 import de.tum.hack.jb.interhyp.challenge.ui.onboarding.OnboardingScreen
 import de.tum.hack.jb.interhyp.challenge.presentation.theme.ThemeViewModel
@@ -53,6 +54,7 @@ fun App(themeViewModel: ThemeViewModel? = null) {
     
     // Preserve navigation state across locale changes
     var showMain by rememberSaveable { mutableStateOf(false) }
+    var showWelcome by rememberSaveable { mutableStateOf(true) }
     var currentMainScreen by rememberSaveable { mutableStateOf("home") }
     
     // Start background image loading and generation (fire and forget, non-blocking)
@@ -95,7 +97,9 @@ fun App(themeViewModel: ThemeViewModel? = null) {
     key(currentLocale) {
         ProvideAppLocale(locale = currentLocale) {
             AppTheme(themePreference = themePreference) {
-                if (showMain) {
+                if (showWelcome) {
+                    WelcomeScreen(onStart = { showWelcome = false })
+                } else if (showMain) {
                     MainScreen(
                         themeViewModel = viewModel,
                         currentScreenState = currentMainScreen,
