@@ -161,10 +161,10 @@ class VertexAIRepositoryImpl(
                 contentType(ContentType.Application.Json)
                 
                 // Add authentication header
-                if (config.apiKey != null) {
-                    parameter("key", config.apiKey)
-                } else if (config.accessToken != null) {
+                if (config.accessToken != null) {
                     header("Authorization", "Bearer ${config.accessToken}")
+                } else if (config.apiKey != null) {
+                    parameter("key", config.apiKey)
                 }
                 
                 setBody(request)
