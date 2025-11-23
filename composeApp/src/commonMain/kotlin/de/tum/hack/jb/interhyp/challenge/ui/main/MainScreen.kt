@@ -68,13 +68,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import de.tum.hack.jb.interhyp.challenge.ui.components.VideoPlayer
-import de.tum.hack.jb.interhyp.challenge.util.currentTimeMillis
-import androidx.compose.foundation.clickable
-import androidx.compose.ui.zIndex
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 
 /**
  * Format number to thousands (e.g., 42321 -> "42k", 180323 -> "180k")
@@ -94,22 +87,6 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
     val httpClient: HttpClient = koinInject()
     
     val uiState by dashboardViewModel.uiState.collectAsState()
-    
-    // Easter Egg State
-    var settingsClickCount by remember { mutableStateOf(0) }
-    var lastSettingsClickTime by remember { mutableStateOf(0L) }
-    var showEasterEgg by remember { mutableStateOf(false) }
-    var videoBytes by remember { mutableStateOf<ByteArray?>(null) }
-
-    LaunchedEffect(showEasterEgg) {
-        if (showEasterEgg && videoBytes == null) {
-            try {
-                videoBytes = Res.readBytes("drawable/download.mp4")
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
-    }
 
     // Load resources for stage image generation
     var neighborhoodBytes by remember { mutableStateOf<ByteArray?>(null) }
@@ -204,23 +181,7 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
                     navItemsLeft = listOf(NavItem(id = "insights", label = "Insights", icon = Insights)),
                     navItemsRight = listOf(NavItem(id = "settings", label = "Settings", icon = Settings)),
                     selectedItemId = currentScreen ?: "home",
-                        onItemSelected = { id ->
-                            if (id == "settings") {
-                                val now = currentTimeMillis()
-                                if (now - lastSettingsClickTime < 500) {
-                                    settingsClickCount++
-                            } else {
-                                settingsClickCount = 1
-                            }
-                            lastSettingsClickTime = now
-
-                            if (settingsClickCount >= 5) {
-                                showEasterEgg = true
-                                settingsClickCount = 0
-                            }
-                        } else {
-                            settingsClickCount = 0
-                        }
+                    onItemSelected = { id ->
                         currentScreen = id
                     },
                     onHomeClick = { currentScreen = "home" },
@@ -402,35 +363,6 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
                             }
                         }
                     }
-                }
-            }
-        }
-
-        if (showEasterEgg && videoBytes != null) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black)
-                    .clickable { /* Consume clicks */ }
-                    .zIndex(100f),
-                contentAlignment = Alignment.Center
-            ) {
-                VideoPlayer(
-                    modifier = Modifier.fillMaxSize(),
-                    videoBytes = videoBytes!!
-                )
-
-                IconButton(
-                    onClick = { showEasterEgg = false },
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(16.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Close,
-                        contentDescription = "Close",
-                        tint = Color.White
-                    )
                 }
             }
         }
