@@ -217,10 +217,8 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
                                     Image(
                                         bitmap = bitmap,
                                         contentDescription = "Construction Stage: ${uiState.houseState}",
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .height(400.dp),
-                                        contentScale = ContentScale.Crop
+                                        modifier = Modifier.fillMaxWidth(),
+                                        contentScale = ContentScale.FillWidth
                                     )
                                 }
                             }
