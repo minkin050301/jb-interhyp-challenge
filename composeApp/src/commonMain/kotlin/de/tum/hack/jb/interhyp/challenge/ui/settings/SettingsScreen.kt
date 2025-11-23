@@ -15,7 +15,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import de.tum.hack.jb.interhyp.challenge.data.repository.UserRepository
 import de.tum.hack.jb.interhyp.challenge.data.service.MonthSimulationService
+import de.tum.hack.jb.interhyp.challenge.domain.model.Coupon
 import de.tum.hack.jb.interhyp.challenge.ui.components.AppScaffold
+import de.tum.hack.jb.interhyp.challenge.ui.components.CouponPopup
 import de.tum.hack.jb.interhyp.challenge.ui.components.Insights
 import de.tum.hack.jb.interhyp.challenge.ui.components.NavItem
 import de.tum.hack.jb.interhyp.challenge.ui.components.Settings
@@ -37,6 +39,7 @@ fun SettingsScreen(
     val coroutineScope = rememberCoroutineScope()
     
     var isSimulating by remember { mutableStateOf(false) }
+    var activeCoupon by remember { mutableStateOf<Coupon?>(null) }
     
     AppScaffold(
         navItemsLeft = listOf(NavItem(id = "insights", label = "Insights", icon = Insights)),
@@ -182,9 +185,30 @@ fun SettingsScreen(
                             Text("Simulate Month")
                         }
                     }
+
+                    Button(
+                        onClick = {
+                            activeCoupon = Coupon(
+                                valueEuro = 50,
+                                unlockPercentage = 25
+                            )
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.secondary
+                        )
+                    ) {
+                        Text("Test Coupon")
+                    }
                 }
             }
         }
+        
+        activeCoupon?.let { coupon ->
+            CouponPopup(
+                coupon = coupon,
+                onDismiss = { activeCoupon = null }
+            )
+        }
     }
 }
-
