@@ -39,15 +39,13 @@ expect fun formatDate(timestamp: Long): String
  */
 fun formatCurrency(amount: Double): String {
     // Use simple string interpolation that works on all platforms
-    val rounded = (amount * 100).toLong()
+    val isNegative = amount < 0
+    val absAmount = if (isNegative) -amount else amount
+    val rounded = (absAmount * 100).toLong()
     val euros = rounded / 100
     val cents = rounded % 100
-    val centsStr = if (cents < 0) {
-        (-cents).toString().padStart(2, '0')
-    } else {
-        cents.toString().padStart(2, '0')
-    }
-    val sign = if (amount < 0) "-" else ""
+    val centsStr = cents.toString().padStart(2, '0')
+    val sign = if (isNegative) "-" else ""
     return "$sign€$euros.$centsStr"
 }
 

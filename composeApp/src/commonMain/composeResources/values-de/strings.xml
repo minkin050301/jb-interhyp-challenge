@@ -196,4 +196,24 @@
     <string name="error_invalid_input">Ungültige Eingabe</string>
     <string name="error_network">Netzwerkfehler. Bitte versuchen Sie es erneut.</string>
     <string name="error_unknown">Ein unbekannter Fehler ist aufgetreten</string>
+    
+    <!-- Balance Timeline Chart -->
+    <string name="balance_timeline_title">Kontostand-Zeitstrahl</string>
+    <string name="set_property_goal_message">Legen Sie ein Immobilienziel fest, um Ihren Zeitstrahl zu sehen</string>
+    <string name="no_savings_data">Keine Spar-Daten verfügbar</string>
+    <string name="goal_reached_title">🎉 Sie haben Ihr Ziel bereits erreicht!</string>
+    <string name="current_savings_label">Aktuelle Ersparnisse: %1$s</string>
+    <string name="required_label">Erforderlich: %1$s</string>
+    <string name="increase_savings_title">Erhöhen Sie Ihre Ersparnisse, um Ihr Ziel zu erreichen</string>
+    <string name="expenses_exceed_income">Ihre aktuellen Ausgaben übersteigen Ihr Einkommen.</string>
+    <string name="goal_in_months">Ziel in %1$s</string>
+    <string name="historical">Vergangenheit</string>
+    <string name="projected">Prognose</string>
+    <string name="now">Jetzt</string>
+    <string name="months_ago">vor %1$d Mon.</string>
+    <string name="years_ago">vor %1$d J.</string>
+    <string name="years_months_ago">vor %1$d J. %2$d Mon.</string>
+    <string name="in_months">in %1$d Mon.</string>
+    <string name="in_years">in %1$d J.</string>
+    <string name="in_years_months">in %1$d J. %2$d Mon.</string>
 </resources>

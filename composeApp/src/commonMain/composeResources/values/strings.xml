@@ -196,4 +196,24 @@
     <string name="error_invalid_input">Invalid input</string>
     <string name="error_network">Network error. Please try again.</string>
     <string name="error_unknown">An unknown error occurred</string>
+    
+    <!-- Balance Timeline Chart -->
+    <string name="balance_timeline_title">Balance Timeline</string>
+    <string name="set_property_goal_message">Set a property goal to see your timeline</string>
+    <string name="no_savings_data">No savings data available</string>
+    <string name="goal_reached_title">🎉 You&apos;ve already reached your goal!</string>
+    <string name="current_savings_label">Current savings: %1$s</string>
+    <string name="required_label">Required: %1$s</string>
+    <string name="increase_savings_title">Increase your savings to reach your goal</string>
+    <string name="expenses_exceed_income">Your current expenses exceed your income.</string>
+    <string name="goal_in_months">Goal in %1$s</string>
+    <string name="historical">Historical</string>
+    <string name="projected">Projected</string>
+    <string name="now">Now</string>
+    <string name="months_ago">%1$d mo ago</string>
+    <string name="years_ago">%1$d y ago</string>
+    <string name="years_months_ago">%1$d y %2$d mo ago</string>
+    <string name="in_months">in %1$d mo</string>
+    <string name="in_years">in %1$d y</string>
+    <string name="in_years_months">in %1$d y %2$d mo</string>
 </resources>

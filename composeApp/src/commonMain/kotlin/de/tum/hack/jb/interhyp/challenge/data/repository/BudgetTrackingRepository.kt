@@ -53,6 +53,14 @@ interface BudgetTrackingRepository {
      * Initialize bank account for a user
      */
     suspend fun initializeBankAccount(userId: String, initialBalance: Double)
+    
+    /**
+     * Save historical balance for a specific month
+     * @param userId User ID
+     * @param monthStart Timestamp of the start of the month
+     * @param balance Balance at the end of that month
+     */
+    suspend fun saveHistoricalBalance(userId: String, monthStart: Long, balance: Double)
 }
 
 /**
@@ -84,6 +92,7 @@ class BudgetTrackingRepositoryImpl : BudgetTrackingRepository {
                     userId = userId,
                     balance = transaction.getSignedAmount(),
                     transactions = listOf(transaction),
+                    historicalBalances = emptyMap(),
                     lastUpdated = currentTimeMillis()
                 )
             } else {
@@ -95,6 +104,7 @@ class BudgetTrackingRepositoryImpl : BudgetTrackingRepository {
                 currentAccount.copy(
                     balance = newBalance,
                     transactions = newTransactions,
+                    historicalBalances = currentAccount.historicalBalances, // Preserve historical balances
                     lastUpdated = currentTimeMillis()
                 )
             }
@@ -115,6 +125,7 @@ class BudgetTrackingRepositoryImpl : BudgetTrackingRepository {
                     account.copy(
                         balance = newBalance,
                         transactions = newTransactions,
+                        historicalBalances = account.historicalBalances, // Preserve historical balances
                         lastUpdated = currentTimeMillis()
                     )
                 } else {
@@ -147,12 +158,14 @@ class BudgetTrackingRepositoryImpl : BudgetTrackingRepository {
         accountFlow.update { currentAccount ->
             currentAccount?.copy(
                 balance = newBalance,
+                historicalBalances = currentAccount.historicalBalances, // Preserve historical balances
                 lastUpdated = currentTimeMillis()
             ) ?: BankAccount(
                 id = "account_$userId",
                 userId = userId,
                 balance = newBalance,
                 transactions = emptyList(),
+                historicalBalances = emptyMap(),
                 lastUpdated = currentTimeMillis()
             )
         }
@@ -202,8 +215,38 @@ class BudgetTrackingRepositoryImpl : BudgetTrackingRepository {
                 userId = userId,
                 balance = initialBalance,
                 transactions = emptyList(),
+                historicalBalances = emptyMap(),
                 lastUpdated = currentTimeMillis()
             )
+        }
+    }
+    
+    override suspend fun saveHistoricalBalance(userId: String, monthStart: Long, balance: Double) {
+        val accountFlow = bankAccounts.getOrPut(userId) {
+            MutableStateFlow(null)
+        }
+        
+        accountFlow.update { currentAccount ->
+            if (currentAccount == null) {
+                // Create account if it doesn't exist
+                BankAccount(
+                    id = "account_$userId",
+                    userId = userId,
+                    balance = balance,
+                    transactions = emptyList(),
+                    historicalBalances = mapOf(monthStart to balance),
+                    lastUpdated = currentTimeMillis()
+                )
+            } else {
+                // Add or update historical balance for this month
+                val updatedHistoricalBalances = currentAccount.historicalBalances.toMutableMap()
+                updatedHistoricalBalances[monthStart] = balance
+                
+                currentAccount.copy(
+                    historicalBalances = updatedHistoricalBalances,
+                    lastUpdated = currentTimeMillis()
+                )
+            }
         }
     }
 }

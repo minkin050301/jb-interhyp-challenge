@@ -13,7 +13,8 @@ data class BankAccount(
     val accountName: String = "Main Account",
     val balance: Double,
     val transactions: List<Transaction> = emptyList(),
-    val lastUpdated: Long = currentTimeMillis() // Unix timestamp
+    val lastUpdated: Long = currentTimeMillis(), // Unix timestamp
+    val historicalBalances: Map<Long, Double> = emptyMap() // Map of month start timestamp -> balance at end of that month
 ) {
     /**
      * Calculate current balance from transactions
