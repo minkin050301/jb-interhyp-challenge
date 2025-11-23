@@ -60,6 +60,21 @@ import org.jetbrains.compose.resources.readResourceBytes
 import de.tum.hack.jb.interhyp.challenge.data.network.ImageUtils
 import de.tum.hack.jb.interhyp.challenge.util.formatCurrency
 import kotlin.math.floor
+import de.tum.hack.jb.interhyp.challenge.data.repository.UserRepository
+import io.ktor.client.HttpClient
+import io.ktor.client.call.body
+import io.ktor.client.request.get
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
+import de.tum.hack.jb.interhyp.challenge.ui.components.VideoPlayer
+import de.tum.hack.jb.interhyp.challenge.util.currentTimeMillis
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.zIndex
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 
 /**
  * Format number to thousands (e.g., 42321 -> "42k", 180323 -> "180k")
@@ -68,14 +83,6 @@ private fun formatToThousands(amount: Double): String {
     val thousands = floor(amount / 1000.0).toInt()
     return "${thousands}k"
 }
-
-import de.tum.hack.jb.interhyp.challenge.data.repository.UserRepository
-import io.ktor.client.HttpClient
-import io.ktor.client.call.body
-import io.ktor.client.request.get
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable
@@ -88,12 +95,30 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
     
     val uiState by dashboardViewModel.uiState.collectAsState()
     
+    // Easter Egg State
+    var settingsClickCount by remember { mutableStateOf(0) }
+    var lastSettingsClickTime by remember { mutableStateOf(0L) }
+    var showEasterEgg by remember { mutableStateOf(false) }
+    var videoBytes by remember { mutableStateOf<ByteArray?>(null) }
+
+    LaunchedEffect(showEasterEgg) {
+        if (showEasterEgg && videoBytes == null) {
+            try {
+                videoBytes = Res.readBytes("drawable/download.mp4")
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+    
     // Load resources for stage image generation
     var neighborhoodBytes by remember { mutableStateOf<ByteArray?>(null) }
     var houseBytes by remember { mutableStateOf<ByteArray?>(null) }
+    var pitBytes by remember { mutableStateOf<ByteArray?>(null) }
 
     LaunchedEffect(Unit) {
         neighborhoodBytes = Res.readBytes("drawable/neighborhood.png")
+        pitBytes = Res.readBytes("drawable/pit.mp4")
         
         // Get user's house image if available
         val user = userRepository.getUser().first()
@@ -120,14 +145,7 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
             val stages = uiState.buildingStageImages
             
             // Check if any stages need to be generated and launch them in parallel
-            if (stages.stage1Foundation == null) {
-                dashboardViewModel.generateBuildingStageImage(
-                    vertexAIRepository,
-                    neighborhoodBytes!!,
-                    houseBytes!!,
-                    stage = 1
-                )
-            }
+            // Stage 1 (Pit) is now a video, so we skip generation for it
             if (stages.stage2Frame == null) {
                 dashboardViewModel.generateBuildingStageImage(
                     vertexAIRepository,
@@ -161,51 +179,78 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
     // Inject ViewModels
     val insightsViewModel: InsightsViewModel = koinInject()
 
-    when (currentScreen) {
-        "insights" -> {
-            InsightsScreen(
-                viewModel = insightsViewModel,
-                onNavigate = { screenId -> currentScreen = screenId }
-            )
-        }
-        "settings" -> {
-            SettingsScreen(
-                themeViewModel = themeViewModel,
-                onNavigate = { screenId -> currentScreen = screenId },
-                onNavigateToProfile = { currentScreen = "profile" }
-            )
-        }
-        "profile" -> {
-            ProfileEditScreen(
-                onBack = { currentScreen = "settings" }
-            )
-        }
-        else -> {
-            AppScaffold(
-                navItemsLeft = listOf(NavItem(id = "insights", label = "Insights", icon = Insights)),
-                navItemsRight = listOf(NavItem(id = "settings", label = "Settings", icon = Settings)),
-                selectedItemId = currentScreen ?: "home",
-                onItemSelected = { id ->
-                    currentScreen = id
-                },
-                onHomeClick = { currentScreen = "home" },
-                containerColor = Color(0xFFA2C9E8) // Blue background for status bar/dynamic island area
-            ) { innerPadding: PaddingValues ->
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color(0xFFA2C9E8)) // Blue background for top and bottom
-                ) {
-                    // Image at the bottom, aligned with navbar
+    Box(modifier = Modifier.fillMaxSize()) {
+        when (currentScreen) {
+            "insights" -> {
+                InsightsScreen(
+                    viewModel = insightsViewModel,
+                    onNavigate = { screenId -> currentScreen = screenId }
+                )
+            }
+            "settings" -> {
+                SettingsScreen(
+                    themeViewModel = themeViewModel,
+                    onNavigate = { screenId -> currentScreen = screenId },
+                    onNavigateToProfile = { currentScreen = "profile" }
+                )
+            }
+            "profile" -> {
+                ProfileEditScreen(
+                    onBack = { currentScreen = "settings" }
+                )
+            }
+            else -> {
+                AppScaffold(
+                    navItemsLeft = listOf(NavItem(id = "insights", label = "Insights", icon = Insights)),
+                    navItemsRight = listOf(NavItem(id = "settings", label = "Settings", icon = Settings)),
+                    selectedItemId = currentScreen ?: "home",
+                        onItemSelected = { id ->
+                            if (id == "settings") {
+                                val now = currentTimeMillis()
+                                if (now - lastSettingsClickTime < 500) {
+                                    settingsClickCount++
+                            } else {
+                                settingsClickCount = 1
+                            }
+                            lastSettingsClickTime = now
+                            
+                            if (settingsClickCount >= 5) {
+                                showEasterEgg = true
+                                settingsClickCount = 0
+                            }
+                        } else {
+                            settingsClickCount = 0
+                        }
+                        currentScreen = id
+                    },
+                    onHomeClick = { currentScreen = "home" },
+                    containerColor = Color(0xFFA2C9E8) // Blue background for status bar/dynamic island area
+                ) { innerPadding: PaddingValues ->
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color(0xFFA2C9E8)) // Blue background for top and bottom
+                    ) {
+                        // Image at the bottom, aligned with navbar
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
                             .align(Alignment.BottomCenter),
                     ) {
-                        if (uiState.buildingStageImages.allStagesGenerated()) {
+                        // Logic for displaying content based on state
+                        if (uiState.houseState == HouseState.STAGE_1 && pitBytes != null) {
+                            // Show Pit Video
+                            VideoPlayer(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(400.dp),
+                                videoBytes = pitBytes!!
+                            )
+                        } else if (uiState.houseState != HouseState.NEIGHBORHOOD && uiState.buildingStageImages.allStagesGenerated()) {
                             // Determine which image to show based on house state
                             val stageImage = when (uiState.houseState) {
-                                HouseState.STAGE_1 -> uiState.buildingStageImages.stage1Foundation
+                                HouseState.NEIGHBORHOOD -> null
+                                HouseState.STAGE_1 -> null // Handled by video
                                 HouseState.STAGE_2 -> uiState.buildingStageImages.stage2Frame
                                 HouseState.STAGE_3 -> uiState.buildingStageImages.stage3Walls
                                 HouseState.STAGE_4 -> uiState.buildingStageImages.stage4Finishing
@@ -226,136 +271,168 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
                                 }
                             }
                         } else {
-                            // Show only neighborhood until all stages are generated
+                            // Show only neighborhood until all stages are generated or if in NEIGHBORHOOD state
                             Image(
-                                painter = painterResource(Res.drawable.neighborhood),
-                                contentDescription = "Neighborhood",
-                                modifier = Modifier.fillMaxWidth(),
-                                contentScale = ContentScale.FillWidth
-                            )
-                            
-                            // Show loading indicator while generating
-                            if (uiState.isGeneratingImage || uiState.isGeneratingStageImage || uiState.generatedHouseImage != null) {
-                                Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.Center
-                                ) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.padding(16.dp)
-                                    )
-                                    Text(
-                                        text = if (uiState.generatedHouseImage == null) "Designing your house..." else "Planning construction stages...",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.background(
-                                            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
-                                            shape = MaterialTheme.shapes.small
-                                        ).padding(8.dp)
-                                    )
+                                    painter = painterResource(Res.drawable.neighborhood),
+                                    contentDescription = "Neighborhood",
+                                    modifier = Modifier.fillMaxWidth(),
+                                    contentScale = ContentScale.FillWidth
+                                )
+                                
+                                // Show loading indicator while generating
+                                // Only show if we are not in NEIGHBORHOOD state or if we are genuinely generating
+                                if (!uiState.buildingStageImages.allStagesGenerated() && 
+                                    (uiState.isGeneratingImage || uiState.isGeneratingStageImage || uiState.generatedHouseImage != null)) {
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.Center
+                                    ) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.padding(16.dp)
+                                        )
+                                        Text(
+                                            text = if (uiState.generatedHouseImage == null) "Designing your house..." else "Planning construction stages...",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.background(
+                                                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
+                                                shape = MaterialTheme.shapes.small
+                                            ).padding(8.dp)
+                                        )
+                                    }
                                 }
                             }
                         }
-                    }
-                    
-                    // Progress bar at the top, over the image
-                    val density = LocalDensity.current
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(innerPadding)
-                            .padding(horizontal = 16.dp, vertical = 16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        // Row with percentage on left and balance/goal on right (above progress bar)
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            // Percentage complete on the left
-                            Text(
-                                "${(uiState.savingsProgress * 100).toInt()}% complete",
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = Color.White,
-                                fontWeight = FontWeight.Medium
-                            )
-                            
-                            // Balance / Goal on the right
-                            Text(
-                                "${formatToThousands(uiState.currentSavings)} / ${formatToThousands(uiState.targetSavings)}",
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = Color.White,
-                                fontWeight = FontWeight.Medium
-                            )
-                        }
                         
-                        // Custom progress bar with checkpoints
-                        Box(
+                        // Progress bar at the top, over the image
+                        val density = LocalDensity.current
+                        Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(20.dp)
+                                .padding(innerPadding)
+                                .padding(horizontal = 16.dp, vertical = 16.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            // Progress bar track
-                            Canvas(modifier = Modifier.fillMaxSize()) {
-                                val trackHeight = 14.dp.toPx()
-                                val cornerRadius = 7.dp.toPx()
-                                val trackTop = (size.height - trackHeight) / 2
-                                val trackBottom = trackTop + trackHeight
-                                
-                                // Draw track (background) with rounded corners
-                                drawRoundRect(
-                                    color = Color.White.copy(alpha = 0.25f),
-                                    topLeft = Offset(0f, trackTop),
-                                    size = androidx.compose.ui.geometry.Size(size.width, trackHeight),
-                                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(cornerRadius, cornerRadius)
+                            // Row with percentage on left and balance/goal on right (above progress bar)
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                // Percentage complete on the left
+                                Text(
+                                    "${(uiState.savingsProgress * 100).toInt()}% complete",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Medium
                                 )
                                 
-                                // Draw filled progress with rounded corners
-                                val progress = uiState.savingsProgress.coerceIn(0f, 1f)
-                                val progressWidth = size.width * progress
-                                if (progressWidth > 0) {
+                                // Balance / Goal on the right
+                                Text(
+                                    "${formatToThousands(uiState.currentSavings)} / ${formatToThousands(uiState.targetSavings)}",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                            
+                            // Custom progress bar with checkpoints
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(20.dp)
+                            ) {
+                                // Progress bar track
+                                Canvas(modifier = Modifier.fillMaxSize()) {
+                                    val trackHeight = 14.dp.toPx()
+                                    val cornerRadius = 7.dp.toPx()
+                                    val trackTop = (size.height - trackHeight) / 2
+                                    val trackBottom = trackTop + trackHeight
+                                    
+                                    // Draw track (background) with rounded corners
                                     drawRoundRect(
-                                        color = Color.White,
+                                        color = Color.White.copy(alpha = 0.25f),
                                         topLeft = Offset(0f, trackTop),
-                                        size = androidx.compose.ui.geometry.Size(progressWidth, trackHeight),
+                                        size = androidx.compose.ui.geometry.Size(size.width, trackHeight),
                                         cornerRadius = androidx.compose.ui.geometry.CornerRadius(cornerRadius, cornerRadius)
                                     )
-                                }
-                                
-                                // Draw checkpoint lines at 20%, 40%, 60%, 80%
-                                val checkpoints = listOf(0.2f, 0.4f, 0.6f, 0.8f)
-                                checkpoints.forEach { checkpoint ->
-                                    val x = size.width * checkpoint
-                                    // Draw majestic vertical line extending above and below
-                                    drawLine(
-                                        color = Color.White.copy(alpha = 0.7f),
-                                        start = Offset(x, trackTop - 6.dp.toPx()),
-                                        end = Offset(x, trackBottom + 6.dp.toPx()),
-                                        strokeWidth = 2.5.dp.toPx()
-                                    )
+                                    
+                                    // Draw filled progress with rounded corners
+                                    val progress = uiState.savingsProgress.coerceIn(0f, 1f)
+                                    val progressWidth = size.width * progress
+                                    if (progressWidth > 0) {
+                                        drawRoundRect(
+                                            color = Color.White,
+                                            topLeft = Offset(0f, trackTop),
+                                            size = androidx.compose.ui.geometry.Size(progressWidth, trackHeight),
+                                            cornerRadius = androidx.compose.ui.geometry.CornerRadius(cornerRadius, cornerRadius)
+                                        )
+                                    }
+                                    
+                                    // Draw checkpoint lines at 20%, 40%, 60%, 80%
+                                    val checkpoints = listOf(0.2f, 0.4f, 0.6f, 0.8f)
+                                    checkpoints.forEach { checkpoint ->
+                                        val x = size.width * checkpoint
+                                        // Draw majestic vertical line extending above and below
+                                        drawLine(
+                                            color = Color.White.copy(alpha = 0.7f),
+                                            start = Offset(x, trackTop - 6.dp.toPx()),
+                                            end = Offset(x, trackBottom + 6.dp.toPx()),
+                                            strokeWidth = 2.5.dp.toPx()
+                                        )
+                                    }
                                 }
                             }
-                        }
-                        
-                        // Annotations below progress bar
-                        BoxWithConstraints(
-                            modifier = Modifier.fillMaxWidth().height(20.dp)
-                        ) {
-                            val checkpoints = listOf(0.2f, 0.4f, 0.6f, 0.8f)
-                            checkpoints.forEach { checkpoint ->
-                                val checkpointAmount = uiState.targetSavings * checkpoint
-                                val xPositionPx = constraints.maxWidth * checkpoint
-                                Text(
-                                    text = formatToThousands(checkpointAmount),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = Color.White.copy(alpha = 0.8f),
-                                    modifier = Modifier
-                                        .offset(x = with(density) { (xPositionPx - 12.dp.toPx()).toDp() })
-                                        .align(Alignment.BottomStart)
-                                )
+                            
+                            // Annotations below progress bar
+                            BoxWithConstraints(
+                                modifier = Modifier.fillMaxWidth().height(20.dp)
+                            ) {
+                                val checkpoints = listOf(0.2f, 0.4f, 0.6f, 0.8f)
+                                checkpoints.forEach { checkpoint ->
+                                    val checkpointAmount = uiState.targetSavings * checkpoint
+                                    val xPositionPx = constraints.maxWidth * checkpoint
+                                    Text(
+                                        text = formatToThousands(checkpointAmount),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = Color.White.copy(alpha = 0.8f),
+                                        modifier = Modifier
+                                            .offset(x = with(density) { (xPositionPx - 12.dp.toPx()).toDp() })
+                                            .align(Alignment.BottomStart)
+                                    )
+                                }
                             }
                         }
                     }
+                }
+            }
+        }
+
+        if (showEasterEgg && videoBytes != null) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black)
+                    .clickable { /* Consume clicks */ }
+                    .zIndex(100f),
+                contentAlignment = Alignment.Center
+            ) {
+                VideoPlayer(
+                    modifier = Modifier.fillMaxSize(),
+                    videoBytes = videoBytes!!
+                )
+                
+                IconButton(
+                    onClick = { showEasterEgg = false },
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(16.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Close,
+                        contentDescription = "Close",
+                        tint = Color.White
+                    )
                 }
             }
         }

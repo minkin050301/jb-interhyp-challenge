@@ -24,26 +24,25 @@ import org.jetbrains.compose.resources.ExperimentalResourceApi
  * House building state enum
  */
 enum class HouseState {
-    STAGE_1, // 0-20%
-    STAGE_2, // 21-40%
-    STAGE_3, // 41-60%
-    STAGE_4, // 61-80%
-    STAGE_5  // 81-100%
+    NEIGHBORHOOD, // 0-20%
+    STAGE_1, // 20-40%
+    STAGE_2, // 40-60%
+    STAGE_3, // 60-80%
+    STAGE_4, // 80-99%
+    STAGE_5  // 100%
 }
 
 /**
  * Building stage images storage
  */
 data class BuildingStageImages(
-    val stage1Foundation: GeneratedImage? = null,
     val stage2Frame: GeneratedImage? = null,
     val stage3Walls: GeneratedImage? = null,
     val stage4Finishing: GeneratedImage? = null,
     val stage5Final: GeneratedImage? = null
 ) {
     fun allStagesGenerated(): Boolean {
-        return stage1Foundation != null && 
-               stage2Frame != null && 
+        return stage2Frame != null && 
                stage3Walls != null && 
                stage4Finishing != null &&
                stage5Final != null
@@ -73,10 +72,11 @@ data class DashboardUiState(
      */
     fun calculateHouseState(): HouseState {
         return when {
-            savingsProgress <= 0.20f -> HouseState.STAGE_1
-            savingsProgress <= 0.40f -> HouseState.STAGE_2
-            savingsProgress <= 0.60f -> HouseState.STAGE_3
-            savingsProgress <= 0.80f -> HouseState.STAGE_4
+            savingsProgress < 0.20f -> HouseState.NEIGHBORHOOD
+            savingsProgress < 0.40f -> HouseState.STAGE_1
+            savingsProgress < 0.60f -> HouseState.STAGE_2
+            savingsProgress < 0.80f -> HouseState.STAGE_3
+            savingsProgress < 1.00f -> HouseState.STAGE_4
             else -> HouseState.STAGE_5
         }
     }
@@ -335,30 +335,6 @@ class DashboardViewModel(
     ) {
         viewModelScope.launch {
             val prompt = when (stage) {
-                1 -> """
-                    Edit the house image to show it in the foundation stage.
-                    
-                    Reference Images:
-                    - First image: The neighborhood background.
-                    - Second image: The target house design.
-                    
-                    Instructions:
-                    - Show the construction site for the house (from the second image) in the neighborhood (first image).
-                    - The house should be integrated naturally into the neighborhood scene.
-                    
-                    Visual Details:
-                    - No parts of the house exist yet
-                    - The ground of the property is being dug out
-                    - Show excavation work with exposed earth
-                    - 3-4 construction workers visible with shovels digging
-                    - Workers wearing safety gear (hard hats, high-visibility vests)
-                    - Piles of dirt around the excavation site
-                    - Construction equipment like wheelbarrows or small machinery
-                    - Maintain the claymorphism/3D style consistent with the reference images
-                    - Smooth, rounded edges with soft, warm lighting
-                    - Seamlessly integrate the construction scene into the provided neighborhood background
-                """.trimIndent()
-                
                 2 -> """
                     Edit the house image to show it in the frame construction stage.
                     
@@ -489,7 +465,6 @@ class DashboardViewModel(
                         val generatedImage = result.data.firstOrNull()
                         _uiState.update { currentState ->
                             val updatedStageImages = when (stage) {
-                                1 -> currentState.buildingStageImages.copy(stage1Foundation = generatedImage)
                                 2 -> currentState.buildingStageImages.copy(stage2Frame = generatedImage)
                                 3 -> currentState.buildingStageImages.copy(stage3Walls = generatedImage)
                                 4 -> currentState.buildingStageImages.copy(stage4Finishing = generatedImage)
