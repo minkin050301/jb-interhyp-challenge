@@ -25,6 +25,8 @@
     <string name="house">Haus</string>
     <string name="apartment">Wohnung</string>
     <string name="size_sqm">Größe (qm)</string>
+    <string name="location_city">Standort (Stadt)</string>
+    <string name="click_to_select_date">Datum auswählen</string>
     <string name="target_date_optional">Zieldatum [Optional]</string>
     
     <!-- About You Step -->

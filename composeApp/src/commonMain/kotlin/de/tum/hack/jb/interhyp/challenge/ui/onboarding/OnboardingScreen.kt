@@ -734,7 +734,7 @@ private fun LocationDropdown(
             value = value,
             onValueChange = {},
             readOnly = true,
-            label = { Text("Location (city)") },
+            label = { Text(stringResource(Res.string.location_city)) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
             colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
             modifier = Modifier.fillMaxWidth().menuAnchor()
