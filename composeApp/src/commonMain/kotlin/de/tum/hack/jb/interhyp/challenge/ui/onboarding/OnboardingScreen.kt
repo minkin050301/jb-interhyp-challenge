@@ -279,8 +279,9 @@ fun OnboardingScreen(
                     location = location.ifBlank { "Munich" },
                     size = size,
                     propertyType = propertyType,
-                    onContinue = {
+                    onContinue = { imageUrl ->
                         syncFormToViewModel()
+                        viewModel.updateGoalPropertyImage(imageUrl)
                         currentStep = 3 // Move to personal info
                     }
                 )

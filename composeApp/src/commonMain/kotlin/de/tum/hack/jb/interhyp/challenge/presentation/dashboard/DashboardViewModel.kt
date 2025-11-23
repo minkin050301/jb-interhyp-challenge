@@ -15,6 +15,10 @@ import de.tum.hack.jb.interhyp.challenge.domain.model.User
 import de.tum.hack.jb.interhyp.challenge.domain.model.UserProfile
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import de.tum.hack.jb.interhyp.challenge.util.currentTimeMillis
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 // import jb_interhyp_challenge.composeapp.generated.resources.Res
 // import jb_interhyp_challenge.composeapp.generated.resources.image
@@ -24,26 +28,25 @@ import org.jetbrains.compose.resources.ExperimentalResourceApi
  * House building state enum
  */
 enum class HouseState {
-    STAGE_1, // 0-20%
-    STAGE_2, // 21-40%
-    STAGE_3, // 41-60%
-    STAGE_4, // 61-80%
-    STAGE_5  // 81-100%
+    NEIGHBORHOOD, // 0-20%
+    STAGE_1, // 20-40%
+    STAGE_2, // 40-60%
+    STAGE_3, // 60-80%
+    STAGE_4, // 80-99%
+    STAGE_5  // 100%
 }
 
 /**
  * Building stage images storage
  */
 data class BuildingStageImages(
-    val stage1Foundation: GeneratedImage? = null,
     val stage2Frame: GeneratedImage? = null,
     val stage3Walls: GeneratedImage? = null,
     val stage4Finishing: GeneratedImage? = null,
     val stage5Final: GeneratedImage? = null
 ) {
     fun allStagesGenerated(): Boolean {
-        return stage1Foundation != null && 
-               stage2Frame != null && 
+        return stage2Frame != null && 
                stage3Walls != null && 
                stage4Finishing != null &&
                stage5Final != null
@@ -66,17 +69,20 @@ data class DashboardUiState(
     val generatedHouseImage: GeneratedImage? = null,
     val isGeneratingImage: Boolean = false,
     val buildingStageImages: BuildingStageImages = BuildingStageImages(),
-    val isGeneratingStageImage: Boolean = false
+    val isGeneratingStageImage: Boolean = false,
+    val simulationDate: Long? = null,
+    val isSimulationPlaying: Boolean = false
 ) {
     /**
      * Calculate house state based on savings progress
      */
     fun calculateHouseState(): HouseState {
         return when {
-            savingsProgress <= 0.20f -> HouseState.STAGE_1
-            savingsProgress <= 0.40f -> HouseState.STAGE_2
-            savingsProgress <= 0.60f -> HouseState.STAGE_3
-            savingsProgress <= 0.80f -> HouseState.STAGE_4
+            savingsProgress < 0.20f -> HouseState.NEIGHBORHOOD
+            savingsProgress < 0.40f -> HouseState.STAGE_1
+            savingsProgress < 0.60f -> HouseState.STAGE_2
+            savingsProgress < 0.80f -> HouseState.STAGE_3
+            savingsProgress < 1.00f -> HouseState.STAGE_4
             else -> HouseState.STAGE_5
         }
     }
@@ -96,6 +102,8 @@ class DashboardViewModel(
     private val _uiState = MutableStateFlow(DashboardUiState())
     val uiState: StateFlow<DashboardUiState> = _uiState.asStateFlow()
     
+    private var simulationJob: Job? = null
+
     init {
         loadDashboardData()
     }
@@ -109,7 +117,12 @@ class DashboardViewModel(
             
             userRepository.getUser().collect { user ->
                 if (user != null) {
-                    _uiState.update { it.copy(user = user) }
+                    _uiState.update { 
+                        it.copy(
+                            user = user,
+                            simulationDate = it.simulationDate ?: currentTimeMillis()
+                        ) 
+                    }
                     loadPropertyAndBudget(user)
                 } else {
                     _uiState.update { 
@@ -247,6 +260,60 @@ class DashboardViewModel(
         loadDashboardData()
     }
     
+    fun toggleSimulation() {
+        val isPlaying = _uiState.value.isSimulationPlaying
+        if (isPlaying) {
+            stopSimulation()
+        } else {
+            startSimulation()
+        }
+    }
+
+    private fun startSimulation() {
+        _uiState.update { it.copy(isSimulationPlaying = true) }
+        simulationJob?.cancel()
+        simulationJob = viewModelScope.launch {
+            while (isActive) {
+                delay(2000) // 2 seconds
+                advanceSimulationOneMonth()
+            }
+        }
+    }
+
+    private fun stopSimulation() {
+        _uiState.update { it.copy(isSimulationPlaying = false) }
+        simulationJob?.cancel()
+        simulationJob = null
+    }
+    
+    private fun advanceSimulationOneMonth() {
+         _uiState.update { state ->
+            // increment date
+            val currentDate = state.simulationDate ?: currentTimeMillis()
+            // Logic to add 1 month (approx 30 days)
+            val newDate = currentDate + 30L * 24 * 60 * 60 * 1000
+            
+            // increment savings
+            val monthlySavings = (state.user?.netIncome ?: 0.0) - (state.user?.expenses ?: 0.0)
+            val newSavings = state.currentSavings + monthlySavings
+            
+            // recalculate progress
+            val targetSavings = state.targetSavings
+             val progress = if (targetSavings > 0) {
+                (newSavings / targetSavings).toFloat().coerceIn(0f, 1f)
+            } else {
+                1f
+            }
+
+            state.copy(
+                simulationDate = newDate,
+                currentSavings = newSavings,
+                savingsProgress = progress,
+                houseState = state.copy(savingsProgress = progress).calculateHouseState()
+            )
+         }
+    }
+
     /**
      * Generate composite image using Vertex AI
      * This is a placeholder for now - actual implementation would require injecting VertexAIRepository
@@ -262,7 +329,19 @@ class DashboardViewModel(
             _uiState.update { it.copy(isGeneratingImage = true) }
             
             val prompt = """
-                A high-quality 3D app icon of a house rendered in a "claymorphism" style. The house should look like it is made of smooth, puffy, matte plastic with rounded edges and corners and soft texture. The house should resemble the one in the attached image. The lighting should be soft and warm, creating gentle gradients on the surfaces. The design should be cute, minimal, and vibrant, isolated and the house inserted into the provided neighborhood.
+                A high-quality 3D app icon of a house rendered in a "claymorphism" style.
+                
+                Reference Images:
+                - First image: The neighborhood background where the house should be placed.
+                - Second image: The house design that should be inserted.
+                
+                Instructions:
+                - Create a final image showing the house (from the second image) inserted into the neighborhood (first image).
+                - The house should look like it is made of smooth, puffy, matte plastic with rounded edges and corners and soft texture.
+                - The house should resemble the second image provided.
+                - The lighting should be soft and warm, creating gentle gradients on the surfaces.
+                - The design should be cute, minimal, and vibrant.
+                - Seamlessly integrate the house into the neighborhood.
             """.trimIndent()
             
             // Encode images to Base64
@@ -323,29 +402,21 @@ class DashboardViewModel(
     ) {
         viewModelScope.launch {
             val prompt = when (stage) {
-                1 -> """
-                    Edit the house image to show it in the foundation stage. The house should be integrated naturally into the neighborhood scene from the reference images.
-                    
-                    Visual Details:
-                    - No parts of the house exist yet
-                    - The ground of the property is being dug out
-                    - Show excavation work with exposed earth
-                    - 3-4 construction workers visible with shovels digging
-                    - Workers wearing safety gear (hard hats, high-visibility vests)
-                    - Piles of dirt around the excavation site
-                    - Construction equipment like wheelbarrows or small machinery
-                    - Maintain the claymorphism/3D style consistent with the reference images
-                    - Smooth, rounded edges with soft, warm lighting
-                    - Seamlessly integrate the construction scene into the provided neighborhood background
-                """.trimIndent()
-                
                 2 -> """
-                    Edit the house image to show it in the frame construction stage. The house should be integrated naturally into the neighborhood scene from the reference images.
+                    Edit the house image to show it in the frame construction stage.
+                    
+                    Reference Images:
+                    - First image: The neighborhood background.
+                    - Second image: The target house design.
+                    
+                    Instructions:
+                    - Show the frame of the house (based on the design in the second image) in the neighborhood (first image).
+                    - The house should be integrated naturally into the neighborhood scene.
                     
                     Structure Elements:
                     - The wooden or steel skeleton/framework of the house is visible
                     - Vertical wall studs, horizontal floor joists, and roof rafters are clearly defined
-                    - The basic shape of walls, floors, and roof structure is apparent
+                    - The basic shape of walls, floors, and roof structure is apparent (matching the shape of the house in the second image)
                     - NO exterior walls, siding, or roof covering yet - just the bare frame
                     
                     Scaffolding:
@@ -383,13 +454,21 @@ class DashboardViewModel(
                 """.trimIndent()
                 
                 3 -> """
-                    Edit the house image to show it in the walls and roof stage. The house should be integrated naturally into the neighborhood scene from the reference images.
+                    Edit the house image to show it in the walls and roof stage.
+                    
+                    Reference Images:
+                    - First image: The neighborhood background.
+                    - Second image: The target house design.
+                    
+                    Instructions:
+                    - Show the house (based on the design in the second image) with walls and roof in the neighborhood (first image).
+                    - The house should be integrated naturally into the neighborhood scene.
                     
                     Visual Details:
                     - Exterior walls are now in place (wood, brick, or other material)
                     - Roof structure is covered with tiles, shingles, or roofing material
                     - The house starts to look "closed" and protected from weather
-                    - Basic house shape is complete
+                    - Basic house shape is complete and matches the second image
                     - Workers adding exterior walls and roof materials
                     - Some scaffolding may still be present
                     - Construction materials and tools visible around the site
@@ -405,10 +484,18 @@ class DashboardViewModel(
                 """.trimIndent()
                 
                 4 -> """
-                    Edit the house image to show it in the finishing stage. The house should be integrated naturally into the neighborhood scene from the reference images.
+                    Edit the house image to show it in the finishing stage.
+                    
+                    Reference Images:
+                    - First image: The neighborhood background.
+                    - Second image: The target house design.
+                    
+                    Instructions:
+                    - Show the house (based on the design in the second image) in the finishing stage in the neighborhood (first image).
+                    - The house should be integrated naturally into the neighborhood scene.
                     
                     Visual Details:
-                    - Windows and doors are installed
+                    - Windows and doors are installed (matching the second image)
                     - Exterior paint or siding is applied
                     - Gutters and downspouts are visible
                     - Trim and decorative elements are in place
@@ -445,7 +532,6 @@ class DashboardViewModel(
                         val generatedImage = result.data.firstOrNull()
                         _uiState.update { currentState ->
                             val updatedStageImages = when (stage) {
-                                1 -> currentState.buildingStageImages.copy(stage1Foundation = generatedImage)
                                 2 -> currentState.buildingStageImages.copy(stage2Frame = generatedImage)
                                 3 -> currentState.buildingStageImages.copy(stage3Walls = generatedImage)
                                 4 -> currentState.buildingStageImages.copy(stage4Finishing = generatedImage)

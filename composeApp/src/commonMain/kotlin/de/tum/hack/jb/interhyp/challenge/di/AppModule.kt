@@ -45,7 +45,7 @@ val dataModule = module {
         VertexAIConfig(
             projectId = "hackatum25mun-1100",
             location = "us-central1",
-            accessToken = "ya29.a0ATi6K2uxR_tkFG7xzDU7OFfZAuKsaH5aOsL-2rJ4-VASFm2vZ-cP0-iuYUCCOWpLOqrLVIOCLM_lpkz0r2w9RVcBf1kOG8k1fHuOqA45heWJm4gQ5Uw_l-kld_usxOwF_0e3tUIKaB6X5avPxiTCugXWgHzGpP5W8Ad_OxJINbJeQHDvppqQWMKIOTEF7EoiXKlBlX0ZTFwUPgaCgYKAXYSARcSFQHGX2Mi45iq3Dwy5IyfoTvjP6D1jw0213"
+            accessToken = "ya29.a0ATi6K2tRtFWGq2xpcezaNqi78nP0XpMpl1097V4bLkMrbV-Spo8FYL-cIKTApnID1jTmwo2IXeqw3JA0am2i7KfKgEh02cKg8x39HES7NRbh0uh_HxkD1VBZ-8I8o_W82YxD8eGXz44IfMJytawjusKilR95-V_PSdE90PaEud16uveokSOoh-Pyamr8IPmMLFlrEx3cJ6oPKQaCgYKAW0SARcSFQHGX2MiDUcaLxBLoZu3SO_Ejr8gjg0213"
         )
     }
     
