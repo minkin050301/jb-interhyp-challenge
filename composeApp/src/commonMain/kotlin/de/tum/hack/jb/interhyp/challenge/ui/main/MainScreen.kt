@@ -16,7 +16,11 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+<<<<<<< Updated upstream
 import androidx.compose.foundation.layout.aspectRatio
+=======
+import androidx.compose.foundation.shape.RoundedCornerShape
+>>>>>>> Stashed changes
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -63,6 +67,9 @@ import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.readResourceBytes
 import de.tum.hack.jb.interhyp.challenge.data.network.ImageUtils
 import de.tum.hack.jb.interhyp.challenge.util.formatCurrency
+import de.tum.hack.jb.interhyp.challenge.util.currentTimeMillis
+import de.tum.hack.jb.interhyp.challenge.util.getYear
+import de.tum.hack.jb.interhyp.challenge.util.getMonth
 import kotlin.math.floor
 import de.tum.hack.jb.interhyp.challenge.data.repository.UserRepository
 import io.ktor.client.HttpClient
@@ -308,6 +315,50 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
 
                         // Progress bar at the top, over the image
                         val density = LocalDensity.current
+<<<<<<< Updated upstream
+=======
+                        val progress = uiState.savingsProgress.coerceIn(0f, 1f)
+                        
+                        // Current date display in bottom left
+                        val currentTime = currentTimeMillis()
+                        val currentYear = getYear(currentTime)
+                        val currentMonth = getMonth(currentTime)
+                        val monthNames = listOf(
+                            "January", "February", "March", "April", "May", "June",
+                            "July", "August", "September", "October", "November", "December"
+                        )
+                        val monthName = monthNames.getOrElse(currentMonth) { "Unknown" }
+                        
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.BottomStart)
+                                .padding(
+                                    start = 24.dp,
+                                    bottom = innerPadding.calculateBottomPadding() + 20.dp,
+                                    top = 20.dp
+                                )
+                                .background(
+                                    color = Color.White.copy(alpha = 0.15f),
+                                    shape = RoundedCornerShape(16.dp)
+                                )
+                                .padding(horizontal = 20.dp, vertical = 12.dp)
+                        ) {
+                            Column {
+                                Text(
+                                    text = monthName,
+                                    style = MaterialTheme.typography.titleLarge,
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                Text(
+                                    text = currentYear.toString(),
+                                    style = MaterialTheme.typography.displaySmall,
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+>>>>>>> Stashed changes
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
