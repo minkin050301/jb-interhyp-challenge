@@ -73,7 +73,6 @@ import de.tum.hack.jb.interhyp.challenge.util.formatCurrency
 import de.tum.hack.jb.interhyp.challenge.util.currentTimeMillis
 import de.tum.hack.jb.interhyp.challenge.util.getYear
 import de.tum.hack.jb.interhyp.challenge.util.getMonth
-import de.tum.hack.jb.interhyp.challenge.util.rememberVibrator
 import kotlin.math.floor
 import de.tum.hack.jb.interhyp.challenge.data.repository.UserRepository
 import io.ktor.client.HttpClient
@@ -170,9 +169,6 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
 
     // Inject ViewModels
     val insightsViewModel: InsightsViewModel = koinInject()
-    
-    // Vibration
-    val vibrator = rememberVibrator()
 
     Box(modifier = Modifier.fillMaxSize()) {
         when (currentScreen) {
@@ -481,13 +477,6 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
                                 
                                 // Load coupon image (static PNG or animated GIF)
                                 if (isReached) {
-                                    // Vibrate when reached during simulation
-                                    LaunchedEffect(checkpoint) {
-                                        if (uiState.isSimulationPlaying) {
-                                            vibrator.vibrate()
-                                        }
-                                    }
-
                                     // Use animated GIF for reached checkpoints
                                     var gifBytesState by remember(checkpoint) { mutableStateOf<ByteArray?>(null) }
                                     LaunchedEffect(checkpoint) {
