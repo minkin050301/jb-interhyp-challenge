@@ -9,6 +9,7 @@ import de.tum.hack.jb.interhyp.challenge.data.repository.BudgetTrackingRepositor
 import de.tum.hack.jb.interhyp.challenge.data.repository.PropertyRepository
 import de.tum.hack.jb.interhyp.challenge.data.repository.UserRepository
 import de.tum.hack.jb.interhyp.challenge.data.repository.VertexAIRepository
+import de.tum.hack.jb.interhyp.challenge.data.service.MonthSimulationService
 import de.tum.hack.jb.interhyp.challenge.domain.model.GeneratedImage
 import kotlinx.coroutines.flow.first
 import de.tum.hack.jb.interhyp.challenge.domain.model.User
@@ -96,7 +97,8 @@ class DashboardViewModel(
     private val userRepository: UserRepository,
     private val propertyRepository: PropertyRepository,
     private val budgetRepository: BudgetRepository,
-    private val budgetTrackingRepository: BudgetTrackingRepository
+    private val budgetTrackingRepository: BudgetTrackingRepository,
+    private val monthSimulationService: MonthSimulationService
 ) : ViewModel() {
     
     private val _uiState = MutableStateFlow(DashboardUiState())
@@ -287,31 +289,27 @@ class DashboardViewModel(
     }
     
     private fun advanceSimulationOneMonth() {
-         _uiState.update { state ->
-            // increment date
-            val currentDate = state.simulationDate ?: currentTimeMillis()
-            // Logic to add 1 month (approx 30 days)
-            val newDate = currentDate + 30L * 24 * 60 * 60 * 1000
-            
-            // increment savings
-            val monthlySavings = (state.user?.netIncome ?: 0.0) - (state.user?.expenses ?: 0.0)
-            val newSavings = state.currentSavings + monthlySavings
-            
-            // recalculate progress
-            val targetSavings = state.targetSavings
-             val progress = if (targetSavings > 0) {
-                (newSavings / targetSavings).toFloat().coerceIn(0f, 1f)
-            } else {
-                1f
+        viewModelScope.launch {
+            val user = _uiState.value.user
+            if (user != null) {
+                try {
+                    // Call the actual simulation service to create transactions and update the database
+                    monthSimulationService.simulateNextMonth(user.id)
+                    
+                    // Update simulation date based on the latest transaction
+                    val transactions = budgetTrackingRepository.getTransactions(user.id).first()
+                    val latestTransactionDate = transactions.maxOfOrNull { it.date }
+                    if (latestTransactionDate != null) {
+                        _uiState.update { it.copy(simulationDate = latestTransactionDate) }
+                    }
+                    
+                    // Refresh dashboard data to get updated values from the database
+                    loadDashboardData()
+                } catch (e: Exception) {
+                    println("Error simulating month: ${e.message}")
+                }
             }
-
-            state.copy(
-                simulationDate = newDate,
-                currentSavings = newSavings,
-                savingsProgress = progress,
-                houseState = state.copy(savingsProgress = progress).calculateHouseState()
-            )
-         }
+        }
     }
 
     /**
