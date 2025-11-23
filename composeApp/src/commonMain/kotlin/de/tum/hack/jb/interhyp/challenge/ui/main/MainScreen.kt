@@ -34,6 +34,7 @@ import de.tum.hack.jb.interhyp.challenge.ui.insights.InsightsScreen
 import de.tum.hack.jb.interhyp.challenge.ui.settings.SettingsScreen
 import de.tum.hack.jb.interhyp.challenge.ui.profile.ProfileEditScreen
 import de.tum.hack.jb.interhyp.challenge.presentation.dashboard.DashboardViewModel
+import de.tum.hack.jb.interhyp.challenge.presentation.dashboard.HouseState
 import de.tum.hack.jb.interhyp.challenge.presentation.insights.InsightsViewModel
 import de.tum.hack.jb.interhyp.challenge.presentation.theme.ThemeViewModel
 import androidx.compose.runtime.collectAsState
@@ -178,21 +179,31 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
                             .fillMaxWidth()
                             .height(400.dp) // Constrain image height so progress bar is visible
                     ) {
-                        if (uiState.generatedHouseImage != null) {
-                            // Show the generated composite image
-                            val bitmap = byteArrayToImageBitmap(ImageUtils.decodeBase64ToImage(uiState.generatedHouseImage!!.base64Data))
-                            if (bitmap != null) {
-                                Image(
-                                    bitmap = bitmap,
-                                    contentDescription = "Generated House in Neighborhood",
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(400.dp),
-                                    contentScale = ContentScale.Crop
-                                )
+                        if (uiState.buildingStageImages.allStagesGenerated()) {
+                            // Determine which image to show based on house state
+                            val stageImage = when (uiState.houseState) {
+                                HouseState.STAGE_1 -> uiState.buildingStageImages.stage1Foundation
+                                HouseState.STAGE_2 -> uiState.buildingStageImages.stage2Frame
+                                HouseState.STAGE_3 -> uiState.buildingStageImages.stage3Walls
+                                HouseState.STAGE_4 -> uiState.buildingStageImages.stage4Finishing
+                                HouseState.STAGE_5 -> uiState.buildingStageImages.stage5Final
+                            }
+                            
+                            if (stageImage != null) {
+                                val bitmap = byteArrayToImageBitmap(ImageUtils.decodeBase64ToImage(stageImage.base64Data))
+                                if (bitmap != null) {
+                                    Image(
+                                        bitmap = bitmap,
+                                        contentDescription = "Construction Stage: ${uiState.houseState}",
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(400.dp),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                }
                             }
                         } else {
-                            // Show only neighborhood until composite is generated
+                            // Show only neighborhood until all stages are generated
                             Image(
                                 painter = painterResource(Res.drawable.neighborhood),
                                 contentDescription = "Neighborhood",
@@ -214,10 +225,24 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
                             )
                             
                             // Show loading indicator while generating
-                            if (uiState.isGeneratingImage) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.padding(16.dp)
-                                )
+                            if (uiState.isGeneratingImage || uiState.isGeneratingStageImage || uiState.generatedHouseImage != null) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.Center
+                                ) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.padding(16.dp)
+                                    )
+                                    Text(
+                                        text = if (uiState.generatedHouseImage == null) "Designing your house..." else "Planning construction stages...",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.background(
+                                            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
+                                            shape = MaterialTheme.shapes.small
+                                        ).padding(8.dp)
+                                    )
+                                }
                             }
                         }
                     }

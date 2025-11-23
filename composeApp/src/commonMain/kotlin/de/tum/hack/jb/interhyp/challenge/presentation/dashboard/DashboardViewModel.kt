@@ -24,9 +24,11 @@ import org.jetbrains.compose.resources.ExperimentalResourceApi
  * House building state enum
  */
 enum class HouseState {
-    FOUNDATION,  // 0-33%
-    WALLS,       // 34-66%
-    ROOF         // 67-100%
+    STAGE_1, // 0-20%
+    STAGE_2, // 21-40%
+    STAGE_3, // 41-60%
+    STAGE_4, // 61-80%
+    STAGE_5  // 81-100%
 }
 
 /**
@@ -36,13 +38,15 @@ data class BuildingStageImages(
     val stage1Foundation: GeneratedImage? = null,
     val stage2Frame: GeneratedImage? = null,
     val stage3Walls: GeneratedImage? = null,
-    val stage4Finishing: GeneratedImage? = null
+    val stage4Finishing: GeneratedImage? = null,
+    val stage5Final: GeneratedImage? = null
 ) {
     fun allStagesGenerated(): Boolean {
         return stage1Foundation != null && 
                stage2Frame != null && 
                stage3Walls != null && 
-               stage4Finishing != null
+               stage4Finishing != null &&
+               stage5Final != null
     }
 }
 
@@ -54,7 +58,7 @@ data class DashboardUiState(
     val currentSavings: Double = 0.0,
     val targetSavings: Double = 0.0,
     val savingsProgress: Float = 0.0f,
-    val houseState: HouseState = HouseState.FOUNDATION,
+    val houseState: HouseState = HouseState.STAGE_1,
     val budgetCalculation: BudgetCalculation? = null,
     val propertyPrice: Double = 0.0,
     val isLoading: Boolean = false,
@@ -69,9 +73,11 @@ data class DashboardUiState(
      */
     fun calculateHouseState(): HouseState {
         return when {
-            savingsProgress < 0.33f -> HouseState.FOUNDATION
-            savingsProgress < 0.67f -> HouseState.WALLS
-            else -> HouseState.ROOF
+            savingsProgress <= 0.20f -> HouseState.STAGE_1
+            savingsProgress <= 0.40f -> HouseState.STAGE_2
+            savingsProgress <= 0.60f -> HouseState.STAGE_3
+            savingsProgress <= 0.80f -> HouseState.STAGE_4
+            else -> HouseState.STAGE_5
         }
     }
 }
@@ -273,9 +279,11 @@ class DashboardViewModel(
             ).collect { result ->
                 when (result) {
                     is NetworkResult.Success -> {
+                        val generatedImage = result.data.firstOrNull()
                         _uiState.update { 
                             it.copy(
-                                generatedHouseImage = result.data.firstOrNull(),
+                                generatedHouseImage = generatedImage,
+                                buildingStageImages = it.buildingStageImages.copy(stage5Final = generatedImage),
                                 isGeneratingImage = false
                             ) 
                         }
