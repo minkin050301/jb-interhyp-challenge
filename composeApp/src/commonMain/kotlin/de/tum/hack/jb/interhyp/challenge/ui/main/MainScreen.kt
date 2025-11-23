@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -51,9 +52,11 @@ import org.jetbrains.compose.resources.painterResource
 import jb_interhyp_challenge.composeapp.generated.resources.Res
 import jb_interhyp_challenge.composeapp.generated.resources.house
 import jb_interhyp_challenge.composeapp.generated.resources.neighborhood
+import jb_interhyp_challenge.composeapp.generated.resources.coupon
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.material3.CircularProgressIndicator
 import de.tum.hack.jb.interhyp.challenge.ui.util.byteArrayToImageBitmap
+import de.tum.hack.jb.interhyp.challenge.ui.util.AnimatedGif
 import de.tum.hack.jb.interhyp.challenge.data.repository.VertexAIRepository
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.readResourceBytes
@@ -192,82 +195,13 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
                             .fillMaxSize()
                             .background(Color(0xFFA2C9E8)) // Blue background for top and bottom
                     ) {
-                        // Image at the bottom, aligned with navbar
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .align(Alignment.BottomCenter),
-                    ) {
-                        // Logic for displaying content based on state
-                        if (uiState.houseState == HouseState.STAGE_1 && pitBytes != null) {
-                            // Show Pit Video
-                            VideoPlayer(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(400.dp),
-                                videoBytes = pitBytes!!
-                            )
-                        } else if (uiState.houseState != HouseState.NEIGHBORHOOD && uiState.buildingStageImages.allStagesGenerated()) {
-                            // Determine which image to show based on house state
-                            val stageImage = when (uiState.houseState) {
-                                HouseState.NEIGHBORHOOD -> null
-                                HouseState.STAGE_1 -> null // Handled by video
-                                HouseState.STAGE_2 -> uiState.buildingStageImages.stage2Frame
-                                HouseState.STAGE_3 -> uiState.buildingStageImages.stage3Walls
-                                HouseState.STAGE_4 -> uiState.buildingStageImages.stage4Finishing
-                                HouseState.STAGE_5 -> uiState.buildingStageImages.stage5Final
-                            }
-                            
-                            if (stageImage != null) {
-                                val bitmap = byteArrayToImageBitmap(ImageUtils.decodeBase64ToImage(stageImage.base64Data))
-                                if (bitmap != null) {
-                                    Image(
-                                        bitmap = bitmap,
-                                        contentDescription = "Construction Stage: ${uiState.houseState}",
-                                        modifier = Modifier.fillMaxWidth(),
-                                        contentScale = ContentScale.FillWidth
-                                    )
-                                }
-                            }
-                        } else {
-                            // Show only neighborhood until all stages are generated or if in NEIGHBORHOOD state
-                            Image(
-                                    painter = painterResource(Res.drawable.neighborhood),
-                                    contentDescription = "Neighborhood",
-                                    modifier = Modifier.fillMaxWidth(),
-                                    contentScale = ContentScale.FillWidth
-                                )
-
-                                // Show loading indicator while generating
-                                // Only show if we are not in NEIGHBORHOOD state or if we are genuinely generating
-                                if (!uiState.buildingStageImages.allStagesGenerated() &&
-                                    (uiState.isGeneratingImage || uiState.isGeneratingStageImage || uiState.generatedHouseImage != null)) {
-                                    Column(
-                                        horizontalAlignment = Alignment.CenterHorizontally,
-                                        verticalArrangement = Arrangement.Center
-                                    ) {
-                                        CircularProgressIndicator(
-                                            modifier = Modifier.padding(16.dp)
-                                        )
-                                        Text(
-                                            text = if (uiState.generatedHouseImage == null) "Designing your house..." else "Planning construction stages...",
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            modifier = Modifier.background(
-                                                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
-                                                shape = MaterialTheme.shapes.small
-                                            ).padding(8.dp)
-                                        )
-                                    }
-                                }
-                            }
-                        }
-
                         // Progress bar at the top, over the image
                         val density = LocalDensity.current
+                        val progress = uiState.savingsProgress.coerceIn(0f, 1f)
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .align(Alignment.TopStart)
                                 .padding(innerPadding)
                                 .padding(horizontal = 16.dp, vertical = 16.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -328,8 +262,8 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
                                         )
                                     }
 
-                                    // Draw checkpoint lines at 20%, 40%, 60%, 80%
-                                    val checkpoints = listOf(0.2f, 0.4f, 0.6f, 0.8f)
+                                    // Draw checkpoint lines at 25%, 50%, 75%
+                                    val checkpoints = listOf(0.25f, 0.5f, 0.75f)
                                     checkpoints.forEach { checkpoint ->
                                         val x = size.width * checkpoint
                                         // Draw majestic vertical line extending above and below
@@ -342,23 +276,173 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
                                     }
                                 }
                             }
-
-                            // Annotations below progress bar
+                            
+                            // Annotations below progress bar - coupon images
                             BoxWithConstraints(
-                                modifier = Modifier.fillMaxWidth().height(20.dp)
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(50.dp)
                             ) {
-                                val checkpoints = listOf(0.2f, 0.4f, 0.6f, 0.8f)
-                                checkpoints.forEach { checkpoint ->
-                                    val checkpointAmount = uiState.targetSavings * checkpoint
-                                    val xPositionPx = constraints.maxWidth * checkpoint
-                                    Text(
-                                        text = formatToThousands(checkpointAmount),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = Color.White.copy(alpha = 0.8f),
+                            val checkpoints = listOf(0.25f, 0.5f, 0.75f)
+                            val currentProgress = uiState.savingsProgress.coerceIn(0f, 1f)
+                            
+                            checkpoints.forEach { checkpoint ->
+                                val isReached = currentProgress >= checkpoint
+                                val xPositionPx = constraints.maxWidth * checkpoint
+                                
+                                // Load coupon image (static PNG or animated GIF)
+                                if (isReached) {
+                                    // Use animated GIF for reached checkpoints
+                                    var gifBytesState by remember(checkpoint) { mutableStateOf<ByteArray?>(null) }
+                                    LaunchedEffect(checkpoint) {
+                                        gifBytesState = try {
+                                            Res.readBytes("drawable/coupon_active.gif")
+                                        } catch (e: Exception) {
+                                            null
+                                        }
+                                    }
+                                    
+                                    val gifBytes = gifBytesState
+                                    if (gifBytes != null) {
+                                        // Use animated GIF composable
+                                        AnimatedGif(
+                                            gifBytes = gifBytes,
+                                            contentDescription = "Active coupon at ${(checkpoint * 100).toInt()}%",
+                                            modifier = Modifier
+                                                .offset(x = with(density) { (xPositionPx - 22.dp.toPx()).toDp() })
+                                                .size(44.dp)
+                                                .align(Alignment.TopStart)
+                                        )
+                                    } else {
+                                        // Fallback to static image if GIF loading fails
+                                        Image(
+                                            painter = painterResource(Res.drawable.coupon),
+                                            contentDescription = "Active coupon at ${(checkpoint * 100).toInt()}%",
+                                            modifier = Modifier
+                                                .offset(x = with(density) { (xPositionPx - 22.dp.toPx()).toDp() })
+                                                .size(44.dp)
+                                                .align(Alignment.TopStart)
+                                        )
+                                    }
+                                } else {
+                                    // Use static PNG for unreached checkpoints
+                                    Image(
+                                        painter = painterResource(Res.drawable.coupon),
+                                        contentDescription = "Coupon at ${(checkpoint * 100).toInt()}%",
                                         modifier = Modifier
-                                            .offset(x = with(density) { (xPositionPx - 12.dp.toPx()).toDp() })
-                                            .align(Alignment.BottomStart)
+                                            .offset(x = with(density) { (xPositionPx - 22.dp.toPx()).toDp() })
+                                            .size(44.dp)
+                                            .align(Alignment.TopStart)
                                     )
+                                }
+                            }
+                        }
+                        }
+                        
+                        // Image at the bottom, aligned with navbar
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .align(Alignment.BottomCenter)
+                        ) {
+                            // Logic for displaying content based on progress percentage
+                            when {
+                                // 0-25%: Show empty neighborhood (no building)
+                                progress < 0.25f -> {
+                                    Image(
+                                        painter = painterResource(Res.drawable.neighborhood),
+                                        contentDescription = "Neighborhood",
+                                        modifier = Modifier.fillMaxWidth(),
+                                        contentScale = ContentScale.FillWidth
+                                    )
+                                }
+                                // 25-50%: Show Pit Video
+                                progress < 0.5f -> {
+                                    val videoBytes = pitBytes
+                                    if (videoBytes != null && videoBytes.isNotEmpty()) {
+                                        VideoPlayer(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .height(400.dp)
+                                                .align(Alignment.BottomCenter),
+                                            videoBytes = videoBytes
+                                        )
+                                    } else {
+                                        // Fallback to neighborhood if video not loaded
+                                        Image(
+                                            painter = painterResource(Res.drawable.neighborhood),
+                                            contentDescription = "Neighborhood",
+                                            modifier = Modifier.fillMaxWidth(),
+                                            contentScale = ContentScale.FillWidth
+                                        )
+                                    }
+                                }
+                                // 50-75%: Show STAGE_3
+                                progress < 0.75f && uiState.buildingStageImages.stage3Walls != null -> {
+                                    val bitmap = byteArrayToImageBitmap(ImageUtils.decodeBase64ToImage(uiState.buildingStageImages.stage3Walls!!.base64Data))
+                                    if (bitmap != null) {
+                                        Image(
+                                            bitmap = bitmap,
+                                            contentDescription = "Construction Stage 3",
+                                            modifier = Modifier.fillMaxWidth(),
+                                            contentScale = ContentScale.FillWidth
+                                        )
+                                    }
+                                }
+                                // 75-100%: Show STAGE_4
+                                progress < 1.0f && uiState.buildingStageImages.stage4Finishing != null -> {
+                                    val bitmap = byteArrayToImageBitmap(ImageUtils.decodeBase64ToImage(uiState.buildingStageImages.stage4Finishing!!.base64Data))
+                                    if (bitmap != null) {
+                                        Image(
+                                            bitmap = bitmap,
+                                            contentDescription = "Construction Stage 4",
+                                            modifier = Modifier.fillMaxWidth(),
+                                            contentScale = ContentScale.FillWidth
+                                        )
+                                    }
+                                }
+                                // 100%: Show STAGE_5 (Final)
+                                progress >= 1.0f && uiState.buildingStageImages.stage5Final != null -> {
+                                    val bitmap = byteArrayToImageBitmap(ImageUtils.decodeBase64ToImage(uiState.buildingStageImages.stage5Final!!.base64Data))
+                                    if (bitmap != null) {
+                                        Image(
+                                            bitmap = bitmap,
+                                            contentDescription = "Construction Stage 5 - Final",
+                                            modifier = Modifier.fillMaxWidth(),
+                                            contentScale = ContentScale.FillWidth
+                                        )
+                                    }
+                                }
+                                // Fallback: Show neighborhood
+                                else -> {
+                                    Image(
+                                        painter = painterResource(Res.drawable.neighborhood),
+                                        contentDescription = "Neighborhood",
+                                        modifier = Modifier.fillMaxWidth(),
+                                        contentScale = ContentScale.FillWidth
+                                    )
+
+                                    // Show loading indicator while generating
+                                    if (!uiState.buildingStageImages.allStagesGenerated() &&
+                                        (uiState.isGeneratingImage || uiState.isGeneratingStageImage || uiState.generatedHouseImage != null)) {
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            verticalArrangement = Arrangement.Center
+                                        ) {
+                                            CircularProgressIndicator(
+                                                modifier = Modifier.padding(16.dp)
+                                            )
+                                            Text(
+                                                text = if (uiState.generatedHouseImage == null) "Designing your house..." else "Planning construction stages...",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                modifier = Modifier.background(
+                                                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
+                                                    shape = MaterialTheme.shapes.small
+                                                ).padding(8.dp)
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         }
