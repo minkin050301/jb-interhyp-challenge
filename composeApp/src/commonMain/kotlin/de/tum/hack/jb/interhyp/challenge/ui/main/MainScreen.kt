@@ -16,11 +16,14 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-<<<<<<< Updated upstream
 import androidx.compose.foundation.layout.aspectRatio
-=======
 import androidx.compose.foundation.shape.RoundedCornerShape
->>>>>>> Stashed changes
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -70,6 +73,7 @@ import de.tum.hack.jb.interhyp.challenge.util.formatCurrency
 import de.tum.hack.jb.interhyp.challenge.util.currentTimeMillis
 import de.tum.hack.jb.interhyp.challenge.util.getYear
 import de.tum.hack.jb.interhyp.challenge.util.getMonth
+import de.tum.hack.jb.interhyp.challenge.util.rememberVibrator
 import kotlin.math.floor
 import de.tum.hack.jb.interhyp.challenge.data.repository.UserRepository
 import io.ktor.client.HttpClient
@@ -166,6 +170,9 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
 
     // Inject ViewModels
     val insightsViewModel: InsightsViewModel = koinInject()
+    
+    // Vibration
+    val vibrator = rememberVibrator()
 
     Box(modifier = Modifier.fillMaxSize()) {
         when (currentScreen) {
@@ -315,12 +322,8 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
 
                         // Progress bar at the top, over the image
                         val density = LocalDensity.current
-<<<<<<< Updated upstream
-=======
-                        val progress = uiState.savingsProgress.coerceIn(0f, 1f)
-                        
                         // Current date display in bottom left
-                        val currentTime = currentTimeMillis()
+                        val currentTime = uiState.simulationDate ?: currentTimeMillis()
                         val currentYear = getYear(currentTime)
                         val currentMonth = getMonth(currentTime)
                         val monthNames = listOf(
@@ -341,24 +344,49 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
                                     color = Color.White.copy(alpha = 0.15f),
                                     shape = RoundedCornerShape(16.dp)
                                 )
-                                .padding(horizontal = 20.dp, vertical = 12.dp)
+                                .padding(horizontal = 16.dp, vertical = 8.dp)
                         ) {
                             Column {
                                 Text(
                                     text = monthName,
-                                    style = MaterialTheme.typography.titleLarge,
+                                    style = MaterialTheme.typography.titleMedium,
                                     color = Color.White,
                                     fontWeight = FontWeight.Medium
                                 )
                                 Text(
                                     text = currentYear.toString(),
-                                    style = MaterialTheme.typography.displaySmall,
+                                    style = MaterialTheme.typography.headlineMedium,
                                     color = Color.White,
                                     fontWeight = FontWeight.Bold
                                 )
                             }
                         }
->>>>>>> Stashed changes
+
+                        // Play button in bottom right
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.BottomEnd)
+                                .padding(
+                                    end = 24.dp,
+                                    bottom = innerPadding.calculateBottomPadding() + 20.dp,
+                                    top = 20.dp
+                                )
+                        ) {
+                             IconButton(
+                                onClick = { dashboardViewModel.toggleSimulation() },
+                                modifier = Modifier
+                                    .background(
+                                        color = MaterialTheme.colorScheme.primary,
+                                        shape = CircleShape
+                                    )
+                            ) {
+                                Icon(
+                                    imageVector = if (uiState.isSimulationPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+                                    contentDescription = if (uiState.isSimulationPlaying) "Pause" else "Play",
+                                    tint = Color.White
+                                )
+                            }
+                        }
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -453,6 +481,13 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
                                 
                                 // Load coupon image (static PNG or animated GIF)
                                 if (isReached) {
+                                    // Vibrate when reached during simulation
+                                    LaunchedEffect(checkpoint) {
+                                        if (uiState.isSimulationPlaying) {
+                                            vibrator.vibrate()
+                                        }
+                                    }
+
                                     // Use animated GIF for reached checkpoints
                                     var gifBytesState by remember(checkpoint) { mutableStateOf<ByteArray?>(null) }
                                     LaunchedEffect(checkpoint) {
