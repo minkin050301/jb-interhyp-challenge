@@ -15,6 +15,10 @@ import de.tum.hack.jb.interhyp.challenge.domain.model.User
 import de.tum.hack.jb.interhyp.challenge.domain.model.UserProfile
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import de.tum.hack.jb.interhyp.challenge.util.currentTimeMillis
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 // import jb_interhyp_challenge.composeapp.generated.resources.Res
 // import jb_interhyp_challenge.composeapp.generated.resources.image
@@ -65,7 +69,9 @@ data class DashboardUiState(
     val generatedHouseImage: GeneratedImage? = null,
     val isGeneratingImage: Boolean = false,
     val buildingStageImages: BuildingStageImages = BuildingStageImages(),
-    val isGeneratingStageImage: Boolean = false
+    val isGeneratingStageImage: Boolean = false,
+    val simulationDate: Long? = null,
+    val isSimulationPlaying: Boolean = false
 ) {
     /**
      * Calculate house state based on savings progress
@@ -96,6 +102,8 @@ class DashboardViewModel(
     private val _uiState = MutableStateFlow(DashboardUiState())
     val uiState: StateFlow<DashboardUiState> = _uiState.asStateFlow()
     
+    private var simulationJob: Job? = null
+
     init {
         loadDashboardData()
     }
@@ -109,7 +117,12 @@ class DashboardViewModel(
             
             userRepository.getUser().collect { user ->
                 if (user != null) {
-                    _uiState.update { it.copy(user = user) }
+                    _uiState.update { 
+                        it.copy(
+                            user = user,
+                            simulationDate = it.simulationDate ?: currentTimeMillis()
+                        ) 
+                    }
                     loadPropertyAndBudget(user)
                 } else {
                     _uiState.update { 
@@ -247,6 +260,60 @@ class DashboardViewModel(
         loadDashboardData()
     }
     
+    fun toggleSimulation() {
+        val isPlaying = _uiState.value.isSimulationPlaying
+        if (isPlaying) {
+            stopSimulation()
+        } else {
+            startSimulation()
+        }
+    }
+
+    private fun startSimulation() {
+        _uiState.update { it.copy(isSimulationPlaying = true) }
+        simulationJob?.cancel()
+        simulationJob = viewModelScope.launch {
+            while (isActive) {
+                delay(2000) // 2 seconds
+                advanceSimulationOneMonth()
+            }
+        }
+    }
+
+    private fun stopSimulation() {
+        _uiState.update { it.copy(isSimulationPlaying = false) }
+        simulationJob?.cancel()
+        simulationJob = null
+    }
+    
+    private fun advanceSimulationOneMonth() {
+         _uiState.update { state ->
+            // increment date
+            val currentDate = state.simulationDate ?: currentTimeMillis()
+            // Logic to add 1 month (approx 30 days)
+            val newDate = currentDate + 30L * 24 * 60 * 60 * 1000
+            
+            // increment savings
+            val monthlySavings = (state.user?.netIncome ?: 0.0) - (state.user?.expenses ?: 0.0)
+            val newSavings = state.currentSavings + monthlySavings
+            
+            // recalculate progress
+            val targetSavings = state.targetSavings
+             val progress = if (targetSavings > 0) {
+                (newSavings / targetSavings).toFloat().coerceIn(0f, 1f)
+            } else {
+                1f
+            }
+
+            state.copy(
+                simulationDate = newDate,
+                currentSavings = newSavings,
+                savingsProgress = progress,
+                houseState = state.copy(savingsProgress = progress).calculateHouseState()
+            )
+         }
+    }
+
     /**
      * Generate composite image using Vertex AI
      * This is a placeholder for now - actual implementation would require injecting VertexAIRepository
