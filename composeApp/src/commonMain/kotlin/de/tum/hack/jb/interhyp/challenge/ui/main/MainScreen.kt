@@ -278,15 +278,6 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
                             fontWeight = FontWeight.Medium
                         )
                     }
-                    
-                    // Blue background at the bottom (behind the navigation bar area)
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(innerPadding.calculateBottomPadding() + 100.dp)
-                            .background(Color(0xFFA2C9E8))
-                            .align(Alignment.BottomCenter)
-                    )
                 }
             }
         }
