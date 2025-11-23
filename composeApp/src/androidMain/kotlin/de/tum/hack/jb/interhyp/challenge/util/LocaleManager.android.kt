@@ -4,14 +4,14 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
-import android.os.Build
 import java.util.Locale
+import java.lang.ref.WeakReference
 
 private const val PREFS_NAME = "app_preferences"
 private const val KEY_LOCALE = "locale_preference"
 
 private var appContext: Context? = null
-private var currentActivity: Activity? = null
+private var currentActivityRef: WeakReference<Activity>? = null
 
 /**
  * Get the saved locale preference from SharedPreferences
@@ -20,8 +20,7 @@ actual fun getSavedLocale(): String {
     // If context is available, read from SharedPreferences
     val context = appContext
     return if (context != null) {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        prefs.getString(KEY_LOCALE, "en") ?: "en"
+        getSavedLocaleInternal(context)
     } else {
         // Return default "en" if context is not available yet
         "en"
@@ -31,7 +30,7 @@ actual fun getSavedLocale(): String {
 /**
  * Internal function to get saved locale with context
  */
-private fun getSavedLocaleInternal(context: Context): String {
+internal fun getSavedLocaleInternal(context: Context): String {
     val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     return prefs.getString(KEY_LOCALE, "en") ?: "en"
 }
@@ -43,25 +42,30 @@ private fun getSavedLocaleInternal(context: Context): String {
 fun initLocaleManager(context: Context) {
     appContext = context.applicationContext
     if (context is Activity) {
-        currentActivity = context
+        currentActivityRef = WeakReference(context)
     }
     
-    // Load saved locale preference and apply it
-    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-    val savedLocale = prefs.getString(KEY_LOCALE, "en") ?: "en"
+    val savedLocale = getSavedLocaleInternal(context)
     
     // Update LocaleManager's state WITHOUT triggering recreation
     LocaleManager.initLocale(savedLocale)
     
     val locale = Locale(savedLocale)
     Locale.setDefault(locale)
+}
+
+/**
+ * Apply the saved locale to the context.
+ * Call this in MainActivity.attachBaseContext()
+ */
+fun applyLocale(context: Context): Context {
+    val savedLocale = getSavedLocaleInternal(context)
+    val locale = Locale(savedLocale)
+    Locale.setDefault(locale)
     
-    // Use existing configuration and update locale
     val config = Configuration(context.resources.configuration)
     config.setLocale(locale)
-    
-    @Suppress("DEPRECATION")
-    context.resources.updateConfiguration(config, context.resources.displayMetrics)
+    return context.createConfigurationContext(config)
 }
 
 /**
@@ -78,12 +82,13 @@ actual fun updatePlatformLocale(localeCode: String) {
     val locale = Locale(localeCode)
     Locale.setDefault(locale)
     
-    val config = Configuration(context.resources.configuration)
-    config.setLocale(locale)
-    
-    @Suppress("DEPRECATION")
-    context.resources.updateConfiguration(config, context.resources.displayMetrics)
-    
-    // Recreate the activity to apply the locale change
-    currentActivity?.recreate()
+    // Restart the activity to apply the locale change
+    // usage of recreate() can cause crashes on some devices/configurations
+    // so we use a fresh intent instead
+    val activity = currentActivityRef?.get()
+    if (activity != null) {
+        val intent = activity.intent
+        activity.finish()
+        activity.startActivity(intent)
+    }
 }

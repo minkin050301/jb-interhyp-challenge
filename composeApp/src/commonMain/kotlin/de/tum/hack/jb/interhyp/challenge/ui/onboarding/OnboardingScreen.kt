@@ -44,6 +44,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import de.tum.hack.jb.interhyp.challenge.domain.model.PropertyType
+import de.tum.hack.jb.interhyp.challenge.getPlatform
 import de.tum.hack.jb.interhyp.challenge.presentation.onboarding.OnboardingViewModel
 import de.tum.hack.jb.interhyp.challenge.ui.components.DatePickerField
 import de.tum.hack.jb.interhyp.challenge.ui.components.ImagePicker
@@ -371,50 +372,53 @@ fun OnboardingScreen(
         }
         
         // Language switcher button - positioned at bottom right
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp)
-        ) {
-            OutlinedButton(
-                onClick = { showLanguageMenu = true },
-                modifier = Modifier.size(56.dp),
-                shape = CircleShape,
-                contentPadding = PaddingValues(0.dp)
+        // Disable on Android to prevent crashes on activity recreation
+        if (!getPlatform().name.startsWith("Android")) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(16.dp)
             ) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
+                OutlinedButton(
+                    onClick = { showLanguageMenu = true },
+                    modifier = Modifier.size(56.dp),
+                    shape = CircleShape,
+                    contentPadding = PaddingValues(0.dp)
                 ) {
-                    Text(
-                        text = "🌐",
-                        style = MaterialTheme.typography.headlineLarge
-                    )
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "🌐",
+                            style = MaterialTheme.typography.headlineLarge
+                        )
+                    }
                 }
-            }
-            
-            androidx.compose.material3.DropdownMenu(
-                expanded = showLanguageMenu,
-                onDismissRequest = { showLanguageMenu = false }
-            ) {
-                LocalePreference.values().forEach { locale ->
-                    DropdownMenuItem(
-                        text = {
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(locale.displayName)
-                                if (locale.localeCode == currentLocale) {
-                                    Text("✓", color = MaterialTheme.colorScheme.primary)
+                
+                androidx.compose.material3.DropdownMenu(
+                    expanded = showLanguageMenu,
+                    onDismissRequest = { showLanguageMenu = false }
+                ) {
+                    LocalePreference.values().forEach { locale ->
+                        DropdownMenuItem(
+                            text = {
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(locale.displayName)
+                                    if (locale.localeCode == currentLocale) {
+                                        Text("✓", color = MaterialTheme.colorScheme.primary)
+                                    }
                                 }
+                            },
+                            onClick = {
+                                LocaleManager.setLocale(locale.localeCode)
+                                showLanguageMenu = false
                             }
-                        },
-                        onClick = {
-                            LocaleManager.setLocale(locale.localeCode)
-                            showLanguageMenu = false
-                        }
-                    )
+                        )
+                    }
                 }
             }
         }
