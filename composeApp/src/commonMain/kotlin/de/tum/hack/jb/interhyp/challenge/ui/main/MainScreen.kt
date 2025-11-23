@@ -1,5 +1,6 @@
 package de.tum.hack.jb.interhyp.challenge.ui.main
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -10,7 +11,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -21,7 +25,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import de.tum.hack.jb.interhyp.challenge.ui.components.AppScaffold
@@ -50,6 +59,15 @@ import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.readResourceBytes
 import de.tum.hack.jb.interhyp.challenge.data.network.ImageUtils
 import de.tum.hack.jb.interhyp.challenge.util.formatCurrency
+import kotlin.math.floor
+
+/**
+ * Format number to thousands (e.g., 42321 -> "42k", 180323 -> "180k")
+ */
+private fun formatToThousands(amount: Double): String {
+    val thousands = floor(amount / 1000.0).toInt()
+    return "${thousands}k"
+}
 
 import de.tum.hack.jb.interhyp.challenge.data.repository.UserRepository
 import io.ktor.client.HttpClient
@@ -240,69 +258,103 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
                     }
                     
                     // Progress bar at the top, over the image
+                    val density = LocalDensity.current
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(innerPadding)
                             .padding(horizontal = 16.dp, vertical = 16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        // Display current balance and target down payment
-                        Column(
+                        // Row with percentage on left and balance/goal on right (above progress bar)
+                        Row(
                             modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    "Current Balance",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = Color.White
+                            // Percentage complete on the left
+                            Text(
+                                "${(uiState.savingsProgress * 100).toInt()}% complete",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = Color.White,
+                                fontWeight = FontWeight.Medium
+                            )
+                            
+                            // Balance / Goal on the right
+                            Text(
+                                "${formatToThousands(uiState.currentSavings)} / ${formatToThousands(uiState.targetSavings)}",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = Color.White,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                        
+                        // Custom progress bar with checkpoints
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(20.dp)
+                        ) {
+                            // Progress bar track
+                            Canvas(modifier = Modifier.fillMaxSize()) {
+                                val trackHeight = 14.dp.toPx()
+                                val cornerRadius = 7.dp.toPx()
+                                val trackTop = (size.height - trackHeight) / 2
+                                val trackBottom = trackTop + trackHeight
+                                
+                                // Draw track (background) with rounded corners
+                                drawRoundRect(
+                                    color = Color.White.copy(alpha = 0.25f),
+                                    topLeft = Offset(0f, trackTop),
+                                    size = androidx.compose.ui.geometry.Size(size.width, trackHeight),
+                                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(cornerRadius, cornerRadius)
                                 )
-                                Text(
-                                    formatCurrency(uiState.currentSavings),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = Color.White,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    "Down Payment Goal",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = Color.White
-                                )
-                                Text(
-                                    formatCurrency(uiState.targetSavings),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = Color.White,
-                                    fontWeight = FontWeight.Bold
-                                )
+                                
+                                // Draw filled progress with rounded corners
+                                val progress = uiState.savingsProgress.coerceIn(0f, 1f)
+                                val progressWidth = size.width * progress
+                                if (progressWidth > 0) {
+                                    drawRoundRect(
+                                        color = Color.White,
+                                        topLeft = Offset(0f, trackTop),
+                                        size = androidx.compose.ui.geometry.Size(progressWidth, trackHeight),
+                                        cornerRadius = androidx.compose.ui.geometry.CornerRadius(cornerRadius, cornerRadius)
+                                    )
+                                }
+                                
+                                // Draw checkpoint lines at 20%, 40%, 60%, 80%
+                                val checkpoints = listOf(0.2f, 0.4f, 0.6f, 0.8f)
+                                checkpoints.forEach { checkpoint ->
+                                    val x = size.width * checkpoint
+                                    // Draw majestic vertical line extending above and below
+                                    drawLine(
+                                        color = Color.White.copy(alpha = 0.7f),
+                                        start = Offset(x, trackTop - 6.dp.toPx()),
+                                        end = Offset(x, trackBottom + 6.dp.toPx()),
+                                        strokeWidth = 2.5.dp.toPx()
+                                    )
+                                }
                             }
                         }
                         
-                        // Progress bar
-                        LinearProgressIndicator(
-                            progress = { uiState.savingsProgress.coerceIn(0f, 1f) }, 
-                            modifier = Modifier.fillMaxWidth(),
-                            color = Color.White,
-                            trackColor = Color.White.copy(alpha = 0.3f)
-                        )
-                        
-                        // Percentage complete
-                        Text(
-                            "${(uiState.savingsProgress * 100).toInt()}% complete",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = Color.White,
-                            fontWeight = FontWeight.Medium
-                        )
+                        // Annotations below progress bar
+                        BoxWithConstraints(
+                            modifier = Modifier.fillMaxWidth().height(20.dp)
+                        ) {
+                            val checkpoints = listOf(0.2f, 0.4f, 0.6f, 0.8f)
+                            checkpoints.forEach { checkpoint ->
+                                val checkpointAmount = uiState.targetSavings * checkpoint
+                                val xPositionPx = constraints.maxWidth * checkpoint
+                                Text(
+                                    text = formatToThousands(checkpointAmount),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color.White.copy(alpha = 0.8f),
+                                    modifier = Modifier
+                                        .offset(x = with(density) { (xPositionPx - 12.dp.toPx()).toDp() })
+                                        .align(Alignment.BottomStart)
+                                )
+                            }
+                        }
                     }
                 }
             }
