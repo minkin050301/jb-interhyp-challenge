@@ -23,6 +23,14 @@ import jb_interhyp_challenge.composeapp.generated.resources.Res
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
+import de.tum.hack.jb.interhyp.challenge.data.repository.UserRepository
+import io.ktor.client.HttpClient
+import io.ktor.client.call.body
+import io.ktor.client.request.get
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
+
 @OptIn(ExperimentalResourceApi::class)
 @Composable
 @Preview
@@ -30,6 +38,7 @@ fun App(themeViewModel: ThemeViewModel? = null) {
     // Use provided viewModel or create a new instance for previews
     // In production, Koin will be initialized and koinInject will work
     val viewModel = themeViewModel ?: remember { ThemeViewModel() }
+    val scope = rememberCoroutineScope()
     
     val themePreference by viewModel.themePreference.collectAsState()
     val currentLocale by LocaleManager.currentLocale.collectAsState()
@@ -37,6 +46,8 @@ fun App(themeViewModel: ThemeViewModel? = null) {
     // Pre-inject dependencies but don't collect state yet to avoid blocking
     val dashboardViewModel: DashboardViewModel = koinInject()
     val vertexAIRepository: VertexAIRepository = koinInject()
+    val userRepository: UserRepository = koinInject()
+    val httpClient: HttpClient = koinInject()
     
     // Preserve navigation state across locale changes
     var showMain by remember { mutableStateOf(false) }
@@ -49,8 +60,26 @@ fun App(themeViewModel: ThemeViewModel? = null) {
             val neighborhoodBytes = withContext(Dispatchers.Default) {
                 Res.readBytes("drawable/neighborhood.png")
             }
-            val houseBytes = withContext(Dispatchers.Default) {
-                Res.readBytes("drawable/house.png")
+            
+            // Check for user profile and selected house
+            val user = userRepository.getUser().first()
+            val houseUrl = user?.goalPropertyImageUrl
+            
+            val houseBytes = if (houseUrl != null) {
+                try {
+                    withContext(Dispatchers.Default) {
+                        httpClient.get(houseUrl).body<ByteArray>()
+                    }
+                } catch (e: Exception) {
+                    println("Failed to load user house image: ${e.message}")
+                    withContext(Dispatchers.Default) {
+                        Res.readBytes("drawable/house.png")
+                    }
+                }
+            } else {
+                withContext(Dispatchers.Default) {
+                    Res.readBytes("drawable/house.png")
+                }
             }
             
             // Start image generation in background (non-blocking)
@@ -73,7 +102,39 @@ fun App(themeViewModel: ThemeViewModel? = null) {
                 } else {
                     OnboardingScreen(
                         onSkip = { showMain = true },
-                        onComplete = { showMain = true }
+                        onComplete = { 
+                            // Re-generate with new house selection before showing main screen
+                            scope.launch {
+                                try {
+                                    val neighborhoodBytes = withContext(Dispatchers.Default) {
+                                        Res.readBytes("drawable/neighborhood.png")
+                                    }
+                                    val user = userRepository.getUser().first()
+                                    val houseUrl = user?.goalPropertyImageUrl
+                                    
+                                    val houseBytes = if (houseUrl != null) {
+                                        try {
+                                            withContext(Dispatchers.Default) {
+                                                httpClient.get(houseUrl).body<ByteArray>()
+                                            }
+                                        } catch (e: Exception) {
+                                            withContext(Dispatchers.Default) {
+                                                Res.readBytes("drawable/house.png")
+                                            }
+                                        }
+                                    } else {
+                                        withContext(Dispatchers.Default) {
+                                            Res.readBytes("drawable/house.png")
+                                        }
+                                    }
+                                    
+                                    dashboardViewModel.generateCompositeImage(vertexAIRepository, neighborhoodBytes, houseBytes)
+                                } catch(e: Exception) {
+                                    println("Error refreshing house image: ${e.message}")
+                                }
+                                showMain = true 
+                            }
+                        }
                     )
                 }
             }

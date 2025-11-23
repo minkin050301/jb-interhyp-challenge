@@ -262,7 +262,19 @@ class DashboardViewModel(
             _uiState.update { it.copy(isGeneratingImage = true) }
             
             val prompt = """
-                A high-quality 3D app icon of a house rendered in a "claymorphism" style. The house should look like it is made of smooth, puffy, matte plastic with rounded edges and corners and soft texture. The house should resemble the one in the attached image. The lighting should be soft and warm, creating gentle gradients on the surfaces. The design should be cute, minimal, and vibrant, isolated and the house inserted into the provided neighborhood.
+                A high-quality 3D app icon of a house rendered in a "claymorphism" style.
+                
+                Reference Images:
+                - First image: The neighborhood background where the house should be placed.
+                - Second image: The house design that should be inserted.
+                
+                Instructions:
+                - Create a final image showing the house (from the second image) inserted into the neighborhood (first image).
+                - The house should look like it is made of smooth, puffy, matte plastic with rounded edges and corners and soft texture.
+                - The house should resemble the second image provided.
+                - The lighting should be soft and warm, creating gentle gradients on the surfaces.
+                - The design should be cute, minimal, and vibrant.
+                - Seamlessly integrate the house into the neighborhood.
             """.trimIndent()
             
             // Encode images to Base64
@@ -324,7 +336,15 @@ class DashboardViewModel(
         viewModelScope.launch {
             val prompt = when (stage) {
                 1 -> """
-                    Edit the house image to show it in the foundation stage. The house should be integrated naturally into the neighborhood scene from the reference images.
+                    Edit the house image to show it in the foundation stage.
+                    
+                    Reference Images:
+                    - First image: The neighborhood background.
+                    - Second image: The target house design.
+                    
+                    Instructions:
+                    - Show the construction site for the house (from the second image) in the neighborhood (first image).
+                    - The house should be integrated naturally into the neighborhood scene.
                     
                     Visual Details:
                     - No parts of the house exist yet
@@ -340,12 +360,20 @@ class DashboardViewModel(
                 """.trimIndent()
                 
                 2 -> """
-                    Edit the house image to show it in the frame construction stage. The house should be integrated naturally into the neighborhood scene from the reference images.
+                    Edit the house image to show it in the frame construction stage.
+                    
+                    Reference Images:
+                    - First image: The neighborhood background.
+                    - Second image: The target house design.
+                    
+                    Instructions:
+                    - Show the frame of the house (based on the design in the second image) in the neighborhood (first image).
+                    - The house should be integrated naturally into the neighborhood scene.
                     
                     Structure Elements:
                     - The wooden or steel skeleton/framework of the house is visible
                     - Vertical wall studs, horizontal floor joists, and roof rafters are clearly defined
-                    - The basic shape of walls, floors, and roof structure is apparent
+                    - The basic shape of walls, floors, and roof structure is apparent (matching the shape of the house in the second image)
                     - NO exterior walls, siding, or roof covering yet - just the bare frame
                     
                     Scaffolding:
@@ -383,13 +411,21 @@ class DashboardViewModel(
                 """.trimIndent()
                 
                 3 -> """
-                    Edit the house image to show it in the walls and roof stage. The house should be integrated naturally into the neighborhood scene from the reference images.
+                    Edit the house image to show it in the walls and roof stage.
+                    
+                    Reference Images:
+                    - First image: The neighborhood background.
+                    - Second image: The target house design.
+                    
+                    Instructions:
+                    - Show the house (based on the design in the second image) with walls and roof in the neighborhood (first image).
+                    - The house should be integrated naturally into the neighborhood scene.
                     
                     Visual Details:
                     - Exterior walls are now in place (wood, brick, or other material)
                     - Roof structure is covered with tiles, shingles, or roofing material
                     - The house starts to look "closed" and protected from weather
-                    - Basic house shape is complete
+                    - Basic house shape is complete and matches the second image
                     - Workers adding exterior walls and roof materials
                     - Some scaffolding may still be present
                     - Construction materials and tools visible around the site
@@ -405,10 +441,18 @@ class DashboardViewModel(
                 """.trimIndent()
                 
                 4 -> """
-                    Edit the house image to show it in the finishing stage. The house should be integrated naturally into the neighborhood scene from the reference images.
+                    Edit the house image to show it in the finishing stage.
+                    
+                    Reference Images:
+                    - First image: The neighborhood background.
+                    - Second image: The target house design.
+                    
+                    Instructions:
+                    - Show the house (based on the design in the second image) in the finishing stage in the neighborhood (first image).
+                    - The house should be integrated naturally into the neighborhood scene.
                     
                     Visual Details:
-                    - Windows and doors are installed
+                    - Windows and doors are installed (matching the second image)
                     - Exterior paint or siding is applied
                     - Gutters and downspouts are visible
                     - Trim and decorative elements are in place
