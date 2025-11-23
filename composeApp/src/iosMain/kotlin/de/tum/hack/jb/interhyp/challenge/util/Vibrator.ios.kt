@@ -2,31 +2,30 @@ package de.tum.hack.jb.interhyp.challenge.util
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import platform.UIKit.UIImpactFeedbackGenerator
-import platform.UIKit.UIImpactFeedbackStyle
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import platform.AudioToolbox.AudioServicesPlaySystemSound
 
-class IosVibrator : Vibrator {
+class IosVibrator(private val scope: CoroutineScope) : Vibrator {
     override fun vibrate() {
-        val generator = UIImpactFeedbackGenerator(style = UIImpactFeedbackStyle.UIImpactFeedbackStyleHeavy)
-        generator.prepare()
-        // Trigger multiple impacts for a longer/stronger effect since iOS doesn't allow setting duration
-        generator.impactOccurred()
-        
-        // Small delays to create a "longer" vibration feel
-        // Note: In a real app, using a timer/dispatch queue would be cleaner,
-        // but for a quick effect in a synchronous call, we'll just trigger once heavily.
-        // iOS Haptics are designed to be short and sharp. 
-        // For "long" vibration on iOS, we'd typically need AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
-        // but that is often rejected in App Store reviews for non-alert contexts.
-        // Let's try the standard "Vibrate" system sound which is the strongest/longest available.
-        
-        // kSystemSoundID_Vibrate = 4095
-        platform.AudioToolbox.AudioServicesPlaySystemSound(4095u)
+        scope.launch {
+            // Repeat the standard vibration to make it feel longer and stronger
+            // kSystemSoundID_Vibrate = 4095
+            val vibrationId = 4095u
+            
+            repeat(3) {
+                AudioServicesPlaySystemSound(vibrationId)
+                // Wait for the vibration to finish (approx 400-500ms) before triggering again
+                delay(600)
+            }
+        }
     }
 }
 
 @Composable
 actual fun rememberVibrator(): Vibrator {
-    return remember { IosVibrator() }
+    val scope = rememberCoroutineScope()
+    return remember(scope) { IosVibrator(scope) }
 }
-
