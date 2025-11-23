@@ -46,8 +46,10 @@ import de.tum.hack.jb.interhyp.challenge.ui.components.AppScaffold
 import de.tum.hack.jb.interhyp.challenge.ui.components.Insights
 import de.tum.hack.jb.interhyp.challenge.ui.components.NavItem
 import de.tum.hack.jb.interhyp.challenge.ui.components.Settings
+import de.tum.hack.jb.interhyp.challenge.ui.components.VideoPlayer
 import de.tum.hack.jb.interhyp.challenge.ui.insights.InsightsScreen
 import de.tum.hack.jb.interhyp.challenge.ui.settings.SettingsScreen
+import de.tum.hack.jb.interhyp.challenge.getPlatform
 import de.tum.hack.jb.interhyp.challenge.ui.profile.ProfileEditScreen
 import de.tum.hack.jb.interhyp.challenge.presentation.dashboard.DashboardViewModel
 import de.tum.hack.jb.interhyp.challenge.presentation.dashboard.HouseState
@@ -75,6 +77,7 @@ import de.tum.hack.jb.interhyp.challenge.util.getYear
 import de.tum.hack.jb.interhyp.challenge.util.getMonth
 import kotlin.math.floor
 import de.tum.hack.jb.interhyp.challenge.data.repository.UserRepository
+import de.tum.hack.jb.interhyp.challenge.ui.util.formatUrlForCrossDomain
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
@@ -93,7 +96,11 @@ private fun formatToThousands(amount: Double): String {
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable
-fun MainScreen(themeViewModel: ThemeViewModel) {
+fun MainScreen(
+    themeViewModel: ThemeViewModel,
+    currentScreenState: String = "home",
+    onScreenChange: (String) -> Unit = {}
+) {
     // Inject DashboardViewModel - image generation is now started in App.kt during onboarding
     val dashboardViewModel: DashboardViewModel = koinInject()
     val vertexAIRepository: VertexAIRepository = koinInject()
@@ -117,8 +124,9 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
         
         houseBytes = if (houseUrl != null) {
             try {
+                val safeUrl = formatUrlForCrossDomain(houseUrl)
                 withContext(Dispatchers.Default) {
-                    httpClient.get(houseUrl).body<ByteArray>()
+                    httpClient.get(safeUrl).body<ByteArray>()
                 }
             } catch (e: Exception) {
                 Res.readBytes("drawable/house.png")
@@ -164,41 +172,42 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
         }
     }
 
-    // Simple state-based navigation
-    var currentScreen by remember { mutableStateOf<String?>("home") }
-
+    // Use hoisted state if onScreenChange is provided with a non-default behavior (logic depends on usage)
+    // But to keep it simple and compatible, we'll use the passed state directly.
+    // The caller is responsible for maintaining the state.
+    
     // Inject ViewModels
     val insightsViewModel: InsightsViewModel = koinInject()
 
     Box(modifier = Modifier.fillMaxSize()) {
-        when (currentScreen) {
+        when (currentScreenState) {
             "insights" -> {
                 InsightsScreen(
                     viewModel = insightsViewModel,
-                    onNavigate = { screenId -> currentScreen = screenId }
+                    onNavigate = { screenId -> onScreenChange(screenId) }
                 )
             }
             "settings" -> {
                 SettingsScreen(
                     themeViewModel = themeViewModel,
-                    onNavigate = { screenId -> currentScreen = screenId },
-                    onNavigateToProfile = { currentScreen = "profile" }
+                    onNavigate = { screenId -> onScreenChange(screenId) },
+                    onNavigateToProfile = { onScreenChange("profile") }
                 )
             }
             "profile" -> {
                 ProfileEditScreen(
-                    onBack = { currentScreen = "settings" }
+                    onBack = { onScreenChange("settings") }
                 )
             }
             else -> {
                 AppScaffold(
                     navItemsLeft = listOf(NavItem(id = "insights", label = "Insights", icon = Insights)),
                     navItemsRight = listOf(NavItem(id = "settings", label = "Settings", icon = Settings)),
-                    selectedItemId = currentScreen ?: "home",
+                    selectedItemId = currentScreenState,
                     onItemSelected = { id ->
-                        currentScreen = id
+                        onScreenChange(id)
                     },
-                    onHomeClick = { currentScreen = "home" },
+                    onHomeClick = { onScreenChange("home") },
                     containerColor = Color(0xFFA2C9E8) // Blue background for status bar/dynamic island area
                 ) { innerPadding: PaddingValues ->
                     Box(
@@ -228,7 +237,9 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
                                 // 25-50%: Show Pit Video
                                 progress < 0.5f -> {
                                     val videoBytes = pitBytes
-                                    if (videoBytes != null && videoBytes.isNotEmpty()) {
+                                    val isWeb = getPlatform().name.startsWith("Web")
+
+                                    if (!isWeb && videoBytes != null && videoBytes.isNotEmpty()) {
                                         VideoPlayer(
                                             modifier = Modifier
                                                 .fillMaxWidth()
@@ -236,11 +247,49 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
                                                 .align(Alignment.BottomCenter),
                                             videoBytes = videoBytes
                                         )
+                                    } else if (isWeb) {
+                                        // On Web, show the pit.jpeg image
+                                        var pitImageBytes by remember { mutableStateOf<ByteArray?>(null) }
+                                        LaunchedEffect(Unit) {
+                                            try {
+                                                pitImageBytes = Res.readBytes("drawable/pit.jpeg")
+                                            } catch (e: Exception) {
+                                                println("Failed to load pit.jpeg: $e")
+                                            }
+                                        }
+
+                                        if (pitImageBytes != null) {
+                                             val bitmap = byteArrayToImageBitmap(pitImageBytes!!)
+                                             if (bitmap != null) {
+                                                 Image(
+                                                     bitmap = bitmap,
+                                                     contentDescription = "Pit Stage",
+                                                     modifier = Modifier.fillMaxWidth(),
+                                                     contentScale = ContentScale.FillWidth
+                                                 )
+                                             } else {
+                                                 // Fallback if bitmap creation fails
+                                                 Image(
+                                                    painter = painterResource(Res.drawable.neighborhood),
+                                                    contentDescription = "Neighborhood (Pit Stage)",
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    contentScale = ContentScale.FillWidth
+                                                 )
+                                             }
+                                        } else {
+                                            // Fallback while loading or if failed
+                                             Image(
+                                                painter = painterResource(Res.drawable.neighborhood),
+                                                contentDescription = "Neighborhood (Pit Stage)",
+                                                modifier = Modifier.fillMaxWidth(),
+                                                contentScale = ContentScale.FillWidth
+                                             )
+                                        }
                                     } else {
-                                        // Fallback to neighborhood if video not loaded
+                                        // Fallback to neighborhood if video not loaded or on Web (where video is disabled)
                                         Image(
                                             painter = painterResource(Res.drawable.neighborhood),
-                                            contentDescription = "Neighborhood",
+                                            contentDescription = "Neighborhood (Pit Stage)",
                                             modifier = Modifier.fillMaxWidth(),
                                             contentScale = ContentScale.FillWidth
                                         )

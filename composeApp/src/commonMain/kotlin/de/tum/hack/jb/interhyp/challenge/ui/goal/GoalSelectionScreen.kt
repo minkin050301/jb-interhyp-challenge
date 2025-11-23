@@ -22,7 +22,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -30,13 +29,16 @@ import androidx.compose.ui.unit.sp
 import de.tum.hack.jb.interhyp.challenge.domain.model.PropertyListingDto
 import de.tum.hack.jb.interhyp.challenge.domain.model.PropertyType
 import de.tum.hack.jb.interhyp.challenge.presentation.goal.GoalSelectionViewModel
+import de.tum.hack.jb.interhyp.challenge.ui.util.byteArrayToImageBitmap
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.yield
 import kotlinx.coroutines.withContext
-import org.jetbrains.skia.Image as SkiaImage
+import de.tum.hack.jb.interhyp.challenge.ui.util.byteArrayToImageBitmap
+import de.tum.hack.jb.interhyp.challenge.ui.util.formatUrlForCrossDomain
 import org.koin.compose.koinInject
 
 @Composable
@@ -234,14 +236,17 @@ private fun PropertyListingCard(
     LaunchedEffect(imageUrl) {
         if (imageUrl != null) {
             try {
-                val imageBytes = withContext(Dispatchers.Default) {
-                    httpClient.get(imageUrl) {
-                        headers {
-                            append(HttpHeaders.Accept, "image/*")
-                        }
-                    }.body<ByteArray>()
-                }
-                imageBitmap = SkiaImage.makeFromEncoded(imageBytes).toComposeImageBitmap()
+                val safeUrl = formatUrlForCrossDomain(imageUrl)
+                val imageBytes = httpClient.get(safeUrl) {
+                    headers {
+                        append(HttpHeaders.Accept, "image/*")
+                    }
+                }.body<ByteArray>()
+
+                // Yield to allow UI updates before heavy decoding
+                yield()
+
+                imageBitmap = byteArrayToImageBitmap(imageBytes)
                 imageLoadingError = null
             } catch (e: Exception) {
                 // Image loading failed, keep null to show placeholder

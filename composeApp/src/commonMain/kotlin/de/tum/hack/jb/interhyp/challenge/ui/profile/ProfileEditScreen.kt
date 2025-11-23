@@ -14,17 +14,15 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -38,7 +36,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import de.tum.hack.jb.interhyp.challenge.domain.model.PropertyType
 import de.tum.hack.jb.interhyp.challenge.presentation.profile.ProfileViewModel
-import de.tum.hack.jb.interhyp.challenge.ui.components.DatePickerField
+import jb_interhyp_challenge.composeapp.generated.resources.Res
+import jb_interhyp_challenge.composeapp.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 
 @Composable
@@ -53,16 +53,10 @@ fun ProfileEditScreen(
     var targetType by remember { mutableStateOf("House") }
     var sizeSqm by remember { mutableStateOf("") }
     var location by remember { mutableStateOf("") }
-    var targetDate by remember { mutableStateOf("") }
     var age by remember { mutableStateOf("") }
     var netIncome by remember { mutableStateOf("") }
-    var yearlyIncomeIncrease by remember { mutableStateOf(3f) } // percentage 0-7%
     var currentWealth by remember { mutableStateOf("") }
     var monthlyExpenses by remember { mutableStateOf("") }
-    var existingCredits by remember { mutableStateOf("") }
-    var adults by remember { mutableStateOf("1") }
-    var children by remember { mutableStateOf("0") }
-    var desiredChildren by remember { mutableStateOf("0") }
 
     // Load profile data into local state when uiState changes
     LaunchedEffect(uiState.hasExistingProfile) {
@@ -70,21 +64,11 @@ fun ProfileEditScreen(
             userName = uiState.name
             age = uiState.age.toString()
             netIncome = uiState.monthlyIncome.toString()
-            // Calculate yearlyIncomeIncrease from futureMonthlyIncome if available
-            if (uiState.futureMonthlyIncome != null && uiState.monthlyIncome > 0) {
-                val increaseRatio = (uiState.futureMonthlyIncome!! / uiState.monthlyIncome) - 1.0
-                yearlyIncomeIncrease = (increaseRatio * 100).toFloat().coerceIn(0f, 7f)
-            }
             currentWealth = uiState.currentEquity.toString()
             monthlyExpenses = uiState.monthlyExpenses.toString()
-            existingCredits = if (uiState.existingCredits > 0) uiState.existingCredits.toString() else ""
             location = uiState.desiredLocation
             sizeSqm = uiState.desiredPropertySize.toString()
             targetType = if (uiState.desiredPropertyType == PropertyType.HOUSE) "House" else "Apartment"
-            targetDate = uiState.targetDate ?: ""
-            desiredChildren = if (uiState.desiredChildren > 0) uiState.desiredChildren.toString() else ""
-            adults = uiState.numberOfAdults.toString()
-            children = uiState.numberOfChildren.toString()
         }
     }
 
@@ -99,14 +83,12 @@ fun ProfileEditScreen(
     fun toDoubleSafe(s: String): Double? = s.replace(',', '.').toDoubleOrNull()
     fun toIntSafe(s: String): Int? = s.toIntOrNull()
 
-    val isValid = remember(userName, age, netIncome, currentWealth, monthlyExpenses, adults, children, location, sizeSqm) {
+    val isValid = remember(userName, age, netIncome, currentWealth, monthlyExpenses, location, sizeSqm) {
         userName.isNotBlank() &&
                 toIntSafe(age)?.let { it in 16..100 } == true &&
                 toDoubleSafe(netIncome)?.let { it >= 0 } == true &&
                 toDoubleSafe(currentWealth)?.let { it >= 0 } == true &&
                 toDoubleSafe(monthlyExpenses)?.let { it >= 0 } == true &&
-                toIntSafe(adults)?.let { it >= 1 } == true &&
-                toIntSafe(children)?.let { it >= 0 } == true &&
                 location.isNotBlank() &&
                 toDoubleSafe(sizeSqm)?.let { it > 0 } == true
     }
@@ -123,7 +105,7 @@ fun ProfileEditScreen(
     ) {
         Spacer(Modifier.height(32.dp))
         Text(
-            "Edit Profile",
+            stringResource(Res.string.edit_profile),
             style = MaterialTheme.typography.headlineMedium,
             color = MaterialTheme.colorScheme.primary
         )
@@ -135,88 +117,41 @@ fun ProfileEditScreen(
         // Personal Information
         ElevatedCard(modifier = Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                SectionTitle("Personal Information")
-                TextFieldSimple(label = "Your name", value = userName, onValueChange = { userName = it })
-                NumberField(label = "Age", value = age, onValueChange = { age = it })
+                SectionTitle(stringResource(Res.string.personal_info))
+                TextFieldSimple(label = stringResource(Res.string.your_name), value = userName, onValueChange = { userName = it })
+                NumberField(label = stringResource(Res.string.age), value = age, onValueChange = { age = it })
             }
         }
 
         // Financial Information
         ElevatedCard(modifier = Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                SectionTitle("Financial Information")
-                NumberField(label = "Net income (per month)", value = netIncome, onValueChange = { netIncome = it })
+                SectionTitle(stringResource(Res.string.financial_info))
+                NumberField(label = stringResource(Res.string.net_income_per_month), value = netIncome, onValueChange = { netIncome = it })
                 
-                // Yearly income increase slider
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        "Future income (yearly increase) [Optional]",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                    Text(
-                        "${(yearlyIncomeIncrease * 10).toInt() / 10.0}% per year",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    Slider(
-                        value = yearlyIncomeIncrease,
-                        onValueChange = { yearlyIncomeIncrease = it },
-                        valueRange = 0f..7f,
-                        steps = 69, // 0.1% increments: (7-0)/0.1 - 1 = 69
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-                
-                NumberField(label = "Current wealth (savings)", value = currentWealth, onValueChange = { currentWealth = it })
-                NumberField(label = "Monthly expenses", value = monthlyExpenses, onValueChange = { monthlyExpenses = it })
-                NumberField(label = "Existing credits (per month) [Optional]", value = existingCredits, onValueChange = { existingCredits = it })
+                NumberField(label = stringResource(Res.string.current_wealth_savings), value = currentWealth, onValueChange = { currentWealth = it })
+                NumberField(label = stringResource(Res.string.monthly_expenses), value = monthlyExpenses, onValueChange = { monthlyExpenses = it })
             }
         }
 
         // Property Target
         ElevatedCard(modifier = Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                SectionTitle("Property Target")
+                SectionTitle(stringResource(Res.string.property_target))
                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                     RadioOption(
-                        label = "House",
+                        label = stringResource(Res.string.house),
                         selected = targetType == "House",
                         onSelect = { targetType = "House" }
                     )
                     RadioOption(
-                        label = "Apartment",
+                        label = stringResource(Res.string.apartment),
                         selected = targetType == "Apartment",
                         onSelect = { targetType = "Apartment" }
                     )
                 }
-                NumberField(label = "Size (sqm)", value = sizeSqm, onValueChange = { sizeSqm = it })
+                NumberField(label = stringResource(Res.string.size_sqm), value = sizeSqm, onValueChange = { sizeSqm = it })
                 LocationDropdown(value = location, onValueChange = { location = it })
-                DatePickerField(label = "Target date [Optional]", value = targetDate, onValueChange = { targetDate = it })
-            }
-        }
-
-        // Household
-        ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                SectionTitle("Household Composition")
-                NumberDropdown(
-                    label = "Adults",
-                    value = adults,
-                    onValueChange = { adults = it },
-                    options = listOf(1, 2, 3, 4, 5)
-                )
-                NumberDropdown(
-                    label = "Children",
-                    value = children,
-                    onValueChange = { children = it },
-                    options = listOf(0, 1, 2, 3, 4, 5, 6)
-                )
-                NumberDropdown(
-                    label = "Desired future children [Optional]",
-                    value = desiredChildren,
-                    onValueChange = { desiredChildren = it },
-                    options = listOf(0, 1, 2, 3, 4)
-                )
             }
         }
 
@@ -229,7 +164,7 @@ fun ProfileEditScreen(
             modifier = Modifier.fillMaxWidth()
         ) {
             Button(onClick = onBack, modifier = Modifier.weight(1f)) {
-                Text("Cancel")
+                Text(stringResource(Res.string.cancel))
             }
 
             Button(
@@ -238,24 +173,13 @@ fun ProfileEditScreen(
                     viewModel.updateName(userName)
                     toIntSafe(age)?.let { viewModel.updateAge(it) }
                     toDoubleSafe(netIncome)?.let { viewModel.updateMonthlyIncome(it) }
-                    // Calculate future monthly income from yearly increase percentage
-                    val currentIncome = toDoubleSafe(netIncome)
-                    val futureMonthlyIncome = if (currentIncome != null && currentIncome > 0) {
-                        currentIncome * (1 + yearlyIncomeIncrease / 100.0)
-                    } else null
-                    viewModel.updateFutureMonthlyIncome(futureMonthlyIncome)
                     toDoubleSafe(monthlyExpenses)?.let { viewModel.updateMonthlyExpenses(it) }
                     toDoubleSafe(currentWealth)?.let { viewModel.updateCurrentEquity(it) }
-                    toDoubleSafe(existingCredits)?.let { viewModel.updateExistingCredits(it) }
                     viewModel.updateDesiredLocation(location)
                     toDoubleSafe(sizeSqm)?.let { viewModel.updateDesiredPropertySize(it) }
                     viewModel.updateDesiredPropertyType(
                         if (targetType == "House") PropertyType.HOUSE else PropertyType.APARTMENT
                     )
-                    viewModel.updateTargetDate(targetDate.ifBlank { null })
-                    toIntSafe(desiredChildren)?.let { viewModel.updateDesiredChildren(it) }
-                    toIntSafe(adults)?.let { viewModel.updateNumberOfAdults(it) }
-                    toIntSafe(children)?.let { viewModel.updateNumberOfChildren(it) }
                     // Save profile
                     viewModel.saveProfile()
                 },
@@ -265,7 +189,7 @@ fun ProfileEditScreen(
                 if (uiState.isLoading) {
                     CircularProgressIndicator()
                 } else {
-                    Text("Save Changes")
+                    Text(stringResource(Res.string.save_changes))
                 }
             }
         }
@@ -275,7 +199,7 @@ fun ProfileEditScreen(
             Spacer(Modifier.height(8.dp))
             ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Error", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(Res.string.error), style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.error)
                     Text(errorMsg, color = MaterialTheme.colorScheme.error)
                 }
             }
@@ -370,7 +294,7 @@ private fun LocationDropdown(
             value = value,
             onValueChange = {},
             readOnly = true,
-            label = { Text("Location (city)") },
+            label = { Text(stringResource(Res.string.location_city)) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
             colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
             modifier = Modifier.fillMaxWidth().menuAnchor()
@@ -385,49 +309,6 @@ private fun LocationDropdown(
                     text = { Text(city) },
                     onClick = {
                         onValueChange(city)
-                        expanded = false
-                    }
-                )
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun NumberDropdown(
-    label: String,
-    value: String,
-    onValueChange: (String) -> Unit,
-    options: List<Int>,
-    modifier: Modifier = Modifier
-) {
-    var expanded by remember { mutableStateOf(false) }
-    
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = it },
-        modifier = modifier.fillMaxWidth()
-    ) {
-        OutlinedTextField(
-            value = value,
-            onValueChange = {},
-            readOnly = true,
-            label = { Text(label) },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
-            modifier = Modifier.fillMaxWidth().menuAnchor()
-        )
-        
-        ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
-            options.forEach { option ->
-                DropdownMenuItem(
-                    text = { Text(option.toString()) },
-                    onClick = {
-                        onValueChange(option.toString())
                         expanded = false
                     }
                 )

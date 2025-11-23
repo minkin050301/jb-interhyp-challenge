@@ -13,3 +13,4 @@ actual fun byteArrayToImageBitmap(bytes: ByteArray): ImageBitmap? {
     }
 }
 
+actual fun formatUrlForCrossDomain(url: String): String = url

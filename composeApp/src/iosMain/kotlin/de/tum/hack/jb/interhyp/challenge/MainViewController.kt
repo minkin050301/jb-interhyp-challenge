@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.window.ComposeUIViewController
 import de.tum.hack.jb.interhyp.challenge.di.appModule
 import de.tum.hack.jb.interhyp.challenge.presentation.theme.ThemeViewModel
+import de.tum.hack.jb.interhyp.challenge.util.initLocaleManager
 import org.koin.compose.koinInject
 import org.koin.core.context.startKoin
 
@@ -12,6 +13,10 @@ fun MainViewController() = ComposeUIViewController {
     startKoin {
         modules(appModule)
     }
+    
+    // Initialize LocaleManager for runtime locale switching
+    initLocaleManager()
+    
     AppWithKoin()
 }
 

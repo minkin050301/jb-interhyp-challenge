@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import de.tum.hack.jb.interhyp.challenge.domain.model.Transaction
+import de.tum.hack.jb.interhyp.challenge.domain.model.TransactionCategory
 import de.tum.hack.jb.interhyp.challenge.presentation.insights.InsightsViewModel
 import de.tum.hack.jb.interhyp.challenge.ui.components.AppScaffold
 import de.tum.hack.jb.interhyp.challenge.ui.components.Insights
@@ -19,6 +20,10 @@ import de.tum.hack.jb.interhyp.challenge.ui.components.NavItem
 import de.tum.hack.jb.interhyp.challenge.ui.components.Settings
 import de.tum.hack.jb.interhyp.challenge.util.formatCurrency
 import de.tum.hack.jb.interhyp.challenge.util.formatDate
+import jb_interhyp_challenge.composeapp.generated.resources.*
+import jb_interhyp_challenge.composeapp.generated.resources.Res
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun InsightsScreen(
@@ -28,8 +33,8 @@ fun InsightsScreen(
     val uiState by viewModel.uiState.collectAsState()
     
     AppScaffold(
-        navItemsLeft = listOf(NavItem(id = "insights", label = "Insights", icon = Insights)),
-        navItemsRight = listOf(NavItem(id = "settings", label = "Settings", icon = Settings)),
+        navItemsLeft = listOf(NavItem(id = "insights", label = stringResource(Res.string.insights_title), icon = Insights)),
+        navItemsRight = listOf(NavItem(id = "settings", label = stringResource(Res.string.settings_title), icon = Settings)),
         selectedItemId = "insights",
         onItemSelected = { id ->
             onNavigate(id)
@@ -55,19 +60,19 @@ fun InsightsScreen(
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = "Error",
+                    text = stringResource(Res.string.error),
                     style = MaterialTheme.typography.headlineSmall,
                     color = MaterialTheme.colorScheme.error
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = uiState.errorMessage ?: "Unknown error",
+                    text = uiState.errorMessage ?: stringResource(Res.string.unknown_error),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Button(onClick = { viewModel.refresh() }) {
-                    Text("Retry")
+                    Text(stringResource(Res.string.retry))
                 }
             }
         } else {
@@ -80,7 +85,7 @@ fun InsightsScreen(
             ) {
                 item {
                     Text(
-                        text = "Insights",
+                        text = stringResource(Res.string.insights_title),
                         style = MaterialTheme.typography.headlineMedium,
                         color = MaterialTheme.colorScheme.primary
                     )
@@ -112,7 +117,7 @@ fun InsightsScreen(
                 // Recent Transactions Card
                 item {
                     Text(
-                        text = "Recent Transactions",
+                        text = stringResource(Res.string.recent_transactions),
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.padding(vertical = 8.dp)
@@ -128,7 +133,7 @@ fun InsightsScreen(
                             )
                         ) {
                             Text(
-                                text = "No transactions yet",
+                                text = stringResource(Res.string.no_transactions_yet),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(16.dp)
@@ -152,7 +157,7 @@ fun InsightsScreen(
                             onClick = { viewModel.refresh() },
                             modifier = Modifier.weight(1f)
                         ) {
-                            Text("Refresh")
+                            Text(stringResource(Res.string.refresh))
                         }
                         Button(
                             onClick = { viewModel.simulateBadMonth() },
@@ -183,7 +188,7 @@ private fun BalanceCard(balance: Double) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Current Balance",
+                text = stringResource(Res.string.current_balance),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onPrimaryContainer
             )
@@ -215,20 +220,20 @@ private fun MonthlySummaryCard(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = "Last Month Summary",
+                text = stringResource(Res.string.last_month_summary),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.padding(bottom = 4.dp)
             )
             
             SummaryRow(
-                label = "Income",
+                label = stringResource(Res.string.income),
                 amount = income,
                 isPositive = true
             )
             
             SummaryRow(
-                label = "Expenses",
+                label = stringResource(Res.string.expenses),
                 amount = expenses,
                 isPositive = false
             )
@@ -236,7 +241,7 @@ private fun MonthlySummaryCard(
             HorizontalDivider()
             
             SummaryRow(
-                label = "Net Savings",
+                label = stringResource(Res.string.net_savings),
                 amount = savings,
                 isPositive = savings >= 0,
                 isBold = true
@@ -306,7 +311,7 @@ private fun TransactionItem(transaction: Transaction) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = transaction.category.name.replace("_", " "),
+                        text = stringResource(getCategoryStringResource(transaction.category)),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -340,6 +345,28 @@ private fun TransactionItem(transaction: Transaction) {
                 }
             )
         }
+    }
+}
+
+/**
+ * Maps TransactionCategory to its corresponding string resource
+ */
+private fun getCategoryStringResource(category: TransactionCategory): StringResource {
+    return when (category) {
+        TransactionCategory.SALARY -> Res.string.category_salary
+        TransactionCategory.BONUS -> Res.string.category_bonus
+        TransactionCategory.INVESTMENT -> Res.string.category_investment
+        TransactionCategory.RENTAL_INCOME -> Res.string.category_rental_income
+        TransactionCategory.OTHER_INCOME -> Res.string.category_other_income
+        TransactionCategory.HOUSING -> Res.string.category_housing
+        TransactionCategory.FOOD -> Res.string.category_food
+        TransactionCategory.TRANSPORTATION -> Res.string.category_transportation
+        TransactionCategory.UTILITIES -> Res.string.category_utilities
+        TransactionCategory.ENTERTAINMENT -> Res.string.category_entertainment
+        TransactionCategory.HEALTHCARE -> Res.string.category_healthcare
+        TransactionCategory.EDUCATION -> Res.string.category_education
+        TransactionCategory.SHOPPING -> Res.string.category_shopping
+        TransactionCategory.OTHER_EXPENSE -> Res.string.category_other_expense
     }
 }
 
