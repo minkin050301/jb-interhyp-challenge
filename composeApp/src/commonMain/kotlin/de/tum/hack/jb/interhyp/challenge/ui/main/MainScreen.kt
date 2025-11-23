@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -195,9 +196,118 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
                             .fillMaxSize()
                             .background(Color(0xFFA2C9E8)) // Blue background for top and bottom
                     ) {
+                        val progress = uiState.savingsProgress.coerceIn(0f, 1f)
+                        
+                        // Image at the bottom, aligned with navbar
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .align(Alignment.BottomCenter)
+                        ) {
+                            // Logic for displaying content based on progress percentage
+                            when {
+                                // 0-25%: Show empty neighborhood (no building)
+                                progress < 0.25f -> {
+                                    Image(
+                                        painter = painterResource(Res.drawable.neighborhood),
+                                        contentDescription = "Neighborhood",
+                                        modifier = Modifier.fillMaxWidth(),
+                                        contentScale = ContentScale.FillWidth
+                                    )
+                                }
+                                // 25-50%: Show Pit Video
+                                progress < 0.5f -> {
+                                    val videoBytes = pitBytes
+                                    if (videoBytes != null && videoBytes.isNotEmpty()) {
+                                        VideoPlayer(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .aspectRatio(9f / 16f)
+                                                .align(Alignment.BottomCenter),
+                                            videoBytes = videoBytes
+                                        )
+                                    } else {
+                                        // Fallback to neighborhood if video not loaded
+                                        Image(
+                                            painter = painterResource(Res.drawable.neighborhood),
+                                            contentDescription = "Neighborhood",
+                                            modifier = Modifier.fillMaxWidth(),
+                                            contentScale = ContentScale.FillWidth
+                                        )
+                                    }
+                                }
+                                // 50-75%: Show STAGE_3
+                                progress < 0.75f && uiState.buildingStageImages.stage3Walls != null -> {
+                                    val bitmap = byteArrayToImageBitmap(ImageUtils.decodeBase64ToImage(uiState.buildingStageImages.stage3Walls!!.base64Data))
+                                    if (bitmap != null) {
+                                        Image(
+                                            bitmap = bitmap,
+                                            contentDescription = "Construction Stage 3",
+                                            modifier = Modifier.fillMaxWidth(),
+                                            contentScale = ContentScale.FillWidth
+                                        )
+                                    }
+                                }
+                                // 75-100%: Show STAGE_4
+                                progress < 1.0f && uiState.buildingStageImages.stage4Finishing != null -> {
+                                    val bitmap = byteArrayToImageBitmap(ImageUtils.decodeBase64ToImage(uiState.buildingStageImages.stage4Finishing!!.base64Data))
+                                    if (bitmap != null) {
+                                        Image(
+                                            bitmap = bitmap,
+                                            contentDescription = "Construction Stage 4",
+                                            modifier = Modifier.fillMaxWidth(),
+                                            contentScale = ContentScale.FillWidth
+                                        )
+                                    }
+                                }
+                                // 100%: Show STAGE_5 (Final)
+                                progress >= 1.0f && uiState.buildingStageImages.stage5Final != null -> {
+                                    val bitmap = byteArrayToImageBitmap(ImageUtils.decodeBase64ToImage(uiState.buildingStageImages.stage5Final!!.base64Data))
+                                    if (bitmap != null) {
+                                        Image(
+                                            bitmap = bitmap,
+                                            contentDescription = "Construction Stage 5 - Final",
+                                            modifier = Modifier.fillMaxWidth(),
+                                            contentScale = ContentScale.FillWidth
+                                        )
+                                    }
+                                }
+                                // Fallback: Show neighborhood
+                                else -> {
+                                    Image(
+                                        painter = painterResource(Res.drawable.neighborhood),
+                                        contentDescription = "Neighborhood",
+                                        modifier = Modifier.fillMaxWidth(),
+                                        contentScale = ContentScale.FillWidth
+                                    )
+
+                                    // Show loading indicator while generating
+                                    if (!uiState.buildingStageImages.allStagesGenerated() &&
+                                        (uiState.isGeneratingImage || uiState.isGeneratingStageImage || uiState.generatedHouseImage != null)) {
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            verticalArrangement = Arrangement.Center
+                                        ) {
+                                            CircularProgressIndicator(
+                                                modifier = Modifier.padding(16.dp)
+                                            )
+                                            Text(
+                                                text = if (uiState.generatedHouseImage == null) "Designing your house..." else "Planning construction stages...",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                modifier = Modifier.background(
+                                                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
+                                                    shape = MaterialTheme.shapes.small
+                                                ).padding(8.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
                         // Progress bar at the top, over the image
                         val density = LocalDensity.current
-                        val progress = uiState.savingsProgress.coerceIn(0f, 1f)
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -337,114 +447,6 @@ fun MainScreen(themeViewModel: ThemeViewModel) {
                                 }
                             }
                         }
-                        }
-                        
-                        // Image at the bottom, aligned with navbar
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .align(Alignment.BottomCenter)
-                        ) {
-                            // Logic for displaying content based on progress percentage
-                            when {
-                                // 0-25%: Show empty neighborhood (no building)
-                                progress < 0.25f -> {
-                                    Image(
-                                        painter = painterResource(Res.drawable.neighborhood),
-                                        contentDescription = "Neighborhood",
-                                        modifier = Modifier.fillMaxWidth(),
-                                        contentScale = ContentScale.FillWidth
-                                    )
-                                }
-                                // 25-50%: Show Pit Video
-                                progress < 0.5f -> {
-                                    val videoBytes = pitBytes
-                                    if (videoBytes != null && videoBytes.isNotEmpty()) {
-                                        VideoPlayer(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .height(400.dp)
-                                                .align(Alignment.BottomCenter),
-                                            videoBytes = videoBytes
-                                        )
-                                    } else {
-                                        // Fallback to neighborhood if video not loaded
-                                        Image(
-                                            painter = painterResource(Res.drawable.neighborhood),
-                                            contentDescription = "Neighborhood",
-                                            modifier = Modifier.fillMaxWidth(),
-                                            contentScale = ContentScale.FillWidth
-                                        )
-                                    }
-                                }
-                                // 50-75%: Show STAGE_3
-                                progress < 0.75f && uiState.buildingStageImages.stage3Walls != null -> {
-                                    val bitmap = byteArrayToImageBitmap(ImageUtils.decodeBase64ToImage(uiState.buildingStageImages.stage3Walls!!.base64Data))
-                                    if (bitmap != null) {
-                                        Image(
-                                            bitmap = bitmap,
-                                            contentDescription = "Construction Stage 3",
-                                            modifier = Modifier.fillMaxWidth(),
-                                            contentScale = ContentScale.FillWidth
-                                        )
-                                    }
-                                }
-                                // 75-100%: Show STAGE_4
-                                progress < 1.0f && uiState.buildingStageImages.stage4Finishing != null -> {
-                                    val bitmap = byteArrayToImageBitmap(ImageUtils.decodeBase64ToImage(uiState.buildingStageImages.stage4Finishing!!.base64Data))
-                                    if (bitmap != null) {
-                                        Image(
-                                            bitmap = bitmap,
-                                            contentDescription = "Construction Stage 4",
-                                            modifier = Modifier.fillMaxWidth(),
-                                            contentScale = ContentScale.FillWidth
-                                        )
-                                    }
-                                }
-                                // 100%: Show STAGE_5 (Final)
-                                progress >= 1.0f && uiState.buildingStageImages.stage5Final != null -> {
-                                    val bitmap = byteArrayToImageBitmap(ImageUtils.decodeBase64ToImage(uiState.buildingStageImages.stage5Final!!.base64Data))
-                                    if (bitmap != null) {
-                                        Image(
-                                            bitmap = bitmap,
-                                            contentDescription = "Construction Stage 5 - Final",
-                                            modifier = Modifier.fillMaxWidth(),
-                                            contentScale = ContentScale.FillWidth
-                                        )
-                                    }
-                                }
-                                // Fallback: Show neighborhood
-                                else -> {
-                                    Image(
-                                        painter = painterResource(Res.drawable.neighborhood),
-                                        contentDescription = "Neighborhood",
-                                        modifier = Modifier.fillMaxWidth(),
-                                        contentScale = ContentScale.FillWidth
-                                    )
-
-                                    // Show loading indicator while generating
-                                    if (!uiState.buildingStageImages.allStagesGenerated() &&
-                                        (uiState.isGeneratingImage || uiState.isGeneratingStageImage || uiState.generatedHouseImage != null)) {
-                                        Column(
-                                            horizontalAlignment = Alignment.CenterHorizontally,
-                                            verticalArrangement = Arrangement.Center
-                                        ) {
-                                            CircularProgressIndicator(
-                                                modifier = Modifier.padding(16.dp)
-                                            )
-                                            Text(
-                                                text = if (uiState.generatedHouseImage == null) "Designing your house..." else "Planning construction stages...",
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                modifier = Modifier.background(
-                                                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
-                                                    shape = MaterialTheme.shapes.small
-                                                ).padding(8.dp)
-                                            )
-                                        }
-                                    }
-                                }
-                            }
                         }
                     }
                 }
