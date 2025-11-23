@@ -59,7 +59,7 @@
     <string name="view_avatar">Avatar ansehen</string>
     
     <!-- Summary Step -->
-    <string name="review_summary">Überprüfen &amp; Bestätigen</string>
+    <string name="review_summary">Überprüfen</string>
     <string name="summary_message">Bitte überprüfen Sie Ihre Angaben, bevor wir Ihren Sparplan berechnen.</string>
     <string name="personal_info">Persönliche Informationen</string>
     <string name="name_label">Name:</string>

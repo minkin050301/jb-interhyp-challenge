@@ -59,7 +59,7 @@
     <string name="view_avatar">View Avatar</string>
     
     <!-- Summary Step -->
-    <string name="review_summary">Review &amp; Confirm</string>
+    <string name="review_summary">Review</string>
     <string name="summary_message">Please review your information before we calculate your savings plan.</string>
     <string name="personal_info">Personal Information</string>
     <string name="name_label">Name:</string>

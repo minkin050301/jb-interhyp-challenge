@@ -51,6 +51,7 @@ fun App(themeViewModel: ThemeViewModel? = null) {
     
     // Preserve navigation state across locale changes
     var showMain by remember { mutableStateOf(false) }
+    var currentMainScreen by remember { mutableStateOf("home") }
     
     // Start background image loading and generation (fire and forget, non-blocking)
     LaunchedEffect(Unit) {
@@ -94,7 +95,9 @@ fun App(themeViewModel: ThemeViewModel? = null) {
             AppTheme(themePreference = themePreference) {
                 if (showMain) {
                     MainScreen(
-                        themeViewModel = viewModel
+                        themeViewModel = viewModel,
+                        currentScreenState = currentMainScreen,
+                        onScreenChange = { currentMainScreen = it }
                     )
                 } else {
                     OnboardingScreen(
